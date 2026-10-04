@@ -50,3 +50,27 @@ export async function addProduct(product) {
 export async function deleteProduct(id) {
   check(await supabase.from('products').delete().eq('id', id));
 }
+
+// ---------- Profiles / avatars ----------
+export async function fetchProfile(id) {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function fetchProfiles() {
+  return check(await supabase.from('profiles').select('*').order('created_at', { ascending: true }));
+}
+
+export async function updateProfile(id, changes) {
+  return check(await supabase.from('profiles').update(changes).eq('id', id).select().single());
+}
+
+// Uploads to avatars/<user id>/<timestamp>.<ext> and returns the public URL.
+export async function uploadAvatar(userId, file) {
+  const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+  const path = `${userId}/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from('avatars').upload(path, file, { contentType: file.type, upsert: true });
+  if (error) throw new Error(error.message);
+  return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+}

@@ -2,7 +2,11 @@ import React from 'react';
 import { PlusIcon, TrashIcon } from './Icons.jsx';
 import { fmt } from '../lib/format.js';
 
-export default function ProductsPage({ products, loaded, onAdd, onDelete }) {
+export default function ProductsPage({ products: all, loaded, onAdd, onDelete, search }) {
+  const q = (search || '').trim().toLowerCase();
+  const products = q
+    ? all.filter((p) => [p.product_name, p.barcode].some((v) => String(v || '').toLowerCase().includes(q)))
+    : all;
   return (
     <section className="page">
       <div className="page-header">

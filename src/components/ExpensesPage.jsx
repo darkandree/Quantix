@@ -10,7 +10,7 @@ const COLUMNS = [
   ['amount', 'Amount', true],
 ];
 
-export default function ExpensesPage({ expenses, month, onMonthChange, onAdd, onDelete }) {
+export default function ExpensesPage({ expenses, month, onMonthChange, onAdd, onDelete, search }) {
   const [shown, setShown] = useState({ date: false, category: true, type: true, amount: true });
   const [panelOpen, setPanelOpen] = useState(false);
   const dropdown = useRef(null);
@@ -24,7 +24,12 @@ export default function ExpensesPage({ expenses, month, onMonthChange, onAdd, on
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
   }, [panelOpen]);
 
-  const filtered = useMemo(() => [...expensesForMonth(expenses, month)].sort(byNewest), [expenses, month]);
+  const filtered = useMemo(() => {
+    const q = (search || '').trim().toLowerCase();
+    const list = expensesForMonth(expenses, month).filter((e) => !q
+      || [e.expense_category, e.product_name, e.remarks, e.expense_type].some((v) => String(v || '').toLowerCase().includes(q)));
+    return list.sort(byNewest);
+  }, [expenses, month, search]);
   const total = filtered.reduce((s, e) => s + Number(e.amount || 0), 0);
   const hideClasses = COLUMNS.filter(([k]) => !shown[k]).map(([k]) => 'hide-col-' + k).join(' ');
 

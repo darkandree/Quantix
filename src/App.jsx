@@ -1,15 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
+import Topbar from './components/Topbar.jsx';
 import Dashboard from './components/Dashboard.jsx';
 import ExpensesPage from './components/ExpensesPage.jsx';
 import ProductsPage from './components/ProductsPage.jsx';
+import UsersPage from './components/UsersPage.jsx';
 import ExpenseModal from './components/ExpenseModal.jsx';
 import ProductModal from './components/ProductModal.jsx';
+import ProfileModal from './components/ProfileModal.jsx';
+import LoginPage from './components/LoginPage.jsx';
 import { ConfirmModal } from './components/Modal.jsx';
 import Toasts from './components/Toasts.jsx';
 import { CloseIcon, MenuIcon } from './components/Icons.jsx';
 import * as api from './lib/api.js';
-import { isConfigured } from './lib/supabase.js';
+import { isConfigured, supabase } from './lib/supabase.js';
 import { currentMonthKey } from './lib/format.js';
 
 const FALLBACK_CATEGORIES = {
@@ -19,23 +23,40 @@ const FALLBACK_CATEGORIES = {
 
 let toastSeq = 0;
 
-export default function App() {
+function Splash({ text, hide }) {
+  return (
+    <div className={'splash' + (hide ? ' hide' : '')}>
+      <div className="splash-inner">
+        <img src="/logo.png" alt="Logo" className="splash-logo" />
+        <div className="splash-name">Expense Ledger</div>
+        <div className="splash-spinner" />
+        <div className="splash-status">{text}</div>
+      </div>
+    </div>
+  );
+}
+
+// Everything the signed-in, Active user sees.
+function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
   const [page, setPage] = useState('dashboard');
-  const [theme, setTheme] = useState(() => (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  const [search, setSearch] = useState('');
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const [expenses, setExpenses] = useState([]);
   const [products, setProducts] = useState([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [usersLoaded, setUsersLoaded] = useState(false);
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
-  const [sync, setSync] = useState(isConfigured ? 'Connecting…' : 'Supabase not configured');
+  const [sync, setSync] = useState('Connecting…');
   const [splash, setSplash] = useState({ visible: true, hide: false, text: 'Syncing with Supabase…' });
   const [dashMonth, setDashMonth] = useState(currentMonthKey());
   const [tableMonth, setTableMonth] = useState(currentMonthKey());
 
   const [expenseModal, setExpenseModal] = useState(false);
   const [productModal, setProductModal] = useState(false);
+  const [profileModal, setProfileModal] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null); // { kind, id }
   const [toasts, setToasts] = useState([]);
 
@@ -46,22 +67,18 @@ export default function App() {
   }, []);
   const dropToast = useCallback((id) => setToasts((t) => t.filter((x) => x.id !== id)), []);
 
-  useEffect(() => { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
-
   // Initial load
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      let ok = isConfigured;
-      if (isConfigured) {
-        setSync('Syncing…');
-        const [cats, exps] = await Promise.allSettled([api.fetchCategories(), api.fetchExpenses()]);
-        if (cancelled) return;
-        if (cats.status === 'fulfilled' && Object.values(cats.value).some((l) => l.length)) setCategories(cats.value);
-        if (exps.status === 'fulfilled') setExpenses(exps.value);
-        else { ok = false; console.error(exps.reason); }
-        setSync(ok ? 'Live · synced with Supabase' : 'Could not reach Supabase');
-      }
+      setSync('Syncing…');
+      const [cats, exps] = await Promise.allSettled([api.fetchCategories(), api.fetchExpenses()]);
+      if (cancelled) return;
+      if (cats.status === 'fulfilled' && Object.values(cats.value).some((l) => l.length)) setCategories(cats.value);
+      const ok = exps.status === 'fulfilled';
+      if (ok) setExpenses(exps.value);
+      else console.error(exps.reason);
+      setSync(ok ? 'Live · synced with Supabase' : 'Could not reach Supabase');
       setSplash((s) => ({ ...s, text: ok ? 'Synced!' : "Couldn't sync — showing what's available" }));
       setTimeout(() => setSplash((s) => ({ ...s, hide: true })), 250);
       setTimeout(() => setSplash((s) => ({ ...s, visible: false })), 650);
@@ -89,10 +106,25 @@ export default function App() {
     return productsPromise.current;
   }, [productsLoaded, products, loadProducts]);
 
+  async function loadUsers() {
+    try {
+      setUsers(await api.fetchProfiles());
+      setUsersLoaded(true);
+    } catch (err) {
+      toast('Could not load users: ' + err.message, 'error');
+    }
+  }
+
   function navigate(next) {
     setPage(next);
     setMobileOpen(false);
     if (next === 'products' && !productsLoaded) ensureProducts();
+    if (next === 'users' && !usersLoaded) loadUsers();
+  }
+
+  function onSearch(value) {
+    setSearch(value);
+    if (value && page === 'dashboard') navigate('expenses');
   }
 
   async function saveExpense(payload) {
@@ -108,6 +140,13 @@ export default function App() {
     setProductsLoaded(true);
     setProductModal(false);
     toast('Product added successfully', 'success');
+  }
+
+  function profileSaved(row) {
+    onProfileChange(row);
+    setUsers((list) => list.map((u) => (u.id === row.id ? row : u)));
+    setProfileModal(false);
+    toast('Profile updated', 'success');
   }
 
   async function confirmDelete() {
@@ -127,16 +166,7 @@ export default function App() {
 
   return (
     <>
-      {splash.visible && (
-        <div className={'splash' + (splash.hide ? ' hide' : '')}>
-          <div className="splash-inner">
-            <img src="/logo.png" alt="Logo" className="splash-logo" />
-            <div className="splash-name">Expense Ledger</div>
-            <div className="splash-spinner" />
-            <div className="splash-status">{splash.text}</div>
-          </div>
-        </div>
-      )}
+      {splash.visible && <Splash text={splash.text} hide={splash.hide} />}
 
       <button className="mobile-menu-btn" aria-label="Open navigation" type="button" onClick={() => setMobileOpen((o) => !o)}>
         {mobileOpen ? <CloseIcon /> : <MenuIcon />}
@@ -151,43 +181,112 @@ export default function App() {
           onToggleCollapse={() => setCollapsed((c) => !c)}
           mobileOpen={mobileOpen}
           syncText={sync}
-          theme={theme}
-          onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
         />
-        <main className="content">
-          {!isConfigured && (
-            <div className="card" style={{ marginBottom: 16 }}>
-              <h3>Supabase isn't configured</h3>
-              <p className="page-sub">Copy <code>.env.example</code> to <code>.env</code>, fill in your project URL and anon key, then restart the dev server.</p>
-            </div>
-          )}
-          {page === 'dashboard' && <Dashboard expenses={expenses} month={dashMonth} onMonthChange={setDashMonth} />}
-          {page === 'expenses' && (
-            <ExpensesPage
-              expenses={expenses}
-              month={tableMonth}
-              onMonthChange={setTableMonth}
-              onAdd={() => setExpenseModal(true)}
-              onDelete={(id) => setPendingDelete({ kind: 'expense', id })}
-            />
-          )}
-          {page === 'products' && (
-            <ProductsPage
-              products={products}
-              loaded={productsLoaded}
-              onAdd={() => setProductModal(true)}
-              onDelete={(id) => setPendingDelete({ kind: 'product', id })}
-            />
-          )}
-        </main>
+        <div className="main-col">
+          <Topbar
+            search={search}
+            onSearch={onSearch}
+            theme={theme}
+            onToggleTheme={onToggleTheme}
+            profile={profile}
+            onEditProfile={() => setProfileModal(true)}
+            onSignOut={() => supabase.auth.signOut()}
+          />
+          <main className="content">
+            {page === 'dashboard' && <Dashboard expenses={expenses} month={dashMonth} onMonthChange={setDashMonth} />}
+            {page === 'expenses' && (
+              <ExpensesPage
+                expenses={expenses}
+                month={tableMonth}
+                onMonthChange={setTableMonth}
+                search={search}
+                onAdd={() => setExpenseModal(true)}
+                onDelete={(id) => setPendingDelete({ kind: 'expense', id })}
+              />
+            )}
+            {page === 'products' && (
+              <ProductsPage
+                products={products}
+                loaded={productsLoaded}
+                search={search}
+                onAdd={() => setProductModal(true)}
+                onDelete={(id) => setPendingDelete({ kind: 'product', id })}
+              />
+            )}
+            {page === 'users' && <UsersPage users={users} loaded={usersLoaded} me={profile.id} search={search} />}
+          </main>
+        </div>
       </div>
 
       {expenseModal && (
         <ExpenseModal categories={categories} ensureProducts={ensureProducts} onSave={saveExpense} onClose={() => setExpenseModal(false)} />
       )}
       {productModal && <ProductModal onSave={saveProduct} onClose={() => setProductModal(false)} />}
+      {profileModal && <ProfileModal profile={profile} onSaved={profileSaved} onClose={() => setProfileModal(false)} />}
       {pendingDelete && <ConfirmModal label={pendingDelete.kind} onCancel={() => setPendingDelete(null)} onConfirm={confirmDelete} />}
       <Toasts toasts={toasts} onDone={dropToast} />
     </>
   );
+}
+
+// Loads the signed-in user's profile and only lets Active users through.
+function Gate({ session, theme, onToggleTheme }) {
+  const [profile, setProfile] = useState(undefined); // undefined = loading, null = missing
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    api.fetchProfile(session.user.id)
+      .then((p) => !cancelled && setProfile(p))
+      .catch((err) => { if (!cancelled) { setError(err.message); setProfile(null); } });
+    return () => { cancelled = true; };
+  }, [session.user.id]);
+
+  if (profile === undefined) return <Splash text="Signing you in…" />;
+
+  if (!profile || profile.status !== 'Active') {
+    return (
+      <div className="login-wrap">
+        <div className="login-card">
+          <h1>{profile ? 'Account inactive' : 'Profile not found'}</h1>
+          <p className="page-sub">
+            {profile
+              ? 'Your account has been deactivated. Contact an administrator to regain access.'
+              : error || 'No profile exists for this account yet. Run supabase/auth.sql, then sign in again.'}
+          </p>
+          <button className="btn-primary login-btn" onClick={() => supabase.auth.signOut()}>Sign out</button>
+        </div>
+      </div>
+    );
+  }
+
+  return <Shell profile={profile} onProfileChange={setProfile} theme={theme} onToggleTheme={onToggleTheme} />;
+}
+
+export default function App() {
+  const [theme, setTheme] = useState(() => (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  const [session, setSession] = useState(undefined); // undefined = still checking
+
+  useEffect(() => { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
+
+  useEffect(() => {
+    if (!isConfigured) { setSession(null); return undefined; }
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  if (!isConfigured) {
+    return (
+      <div className="login-wrap">
+        <div className="login-card">
+          <h1>Supabase isn't configured</h1>
+          <p className="page-sub">Copy <code>.env.example</code> to <code>.env</code>, fill in your project URL and anon key, then restart the dev server.</p>
+        </div>
+      </div>
+    );
+  }
+  if (session === undefined) return <Splash text="Loading…" />;
+  if (!session) return <LoginPage theme={theme} />;
+  return <Gate session={session} theme={theme} onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} />;
 }
