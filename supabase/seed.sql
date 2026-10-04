@@ -1,6 +1,6 @@
 -- Seed data generated from ExpensesDataTable.xlsx
 
-insert into public.expense_details (id, expense_type, expense_category) values
+insert into public.expense_details (id, expense_type, expense_category) overriding system value values
   (1, 'Variable Expenses', 'Laundry'),
   (2, 'Variable Expenses', 'Fuel'),
   (3, 'Variable Expenses', 'Groceries'),
@@ -16,7 +16,7 @@ insert into public.expense_details (id, expense_type, expense_category) values
   (13, 'Fixed Expenses', 'Electricity'),
   (14, 'Fixed Expenses', 'Internet');
 
-insert into public.expenses (id, expense_type, expense_category, product_name, amount, remarks, date) values
+insert into public.expenses (id, expense_type, expense_category, product_name, amount, remarks, date) overriding system value values
   (1, 'Variable Expenses', 'Laundry', null, 170.0, null, '2026-08-01'),
   (2, 'Variable Expenses', 'Food Order', 'Lechon', 380.0, 'Dinner', '2026-08-02'),
   (3, 'Variable Expenses', 'Miscellaneous', 'Goodies', 170.0, '7Eleven snack', '2026-08-02'),
@@ -178,7 +178,7 @@ insert into public.expenses (id, expense_type, expense_category, product_name, a
   (159, 'Variable Expenses', 'Miscellaneous', '7Eleven Goodies', 170.0, null, '2026-09-25'),
   (160, 'Variable Expenses', 'Miscellaneous', 'Drinking Water', 35.0, null, '2026-09-28');
 
-insert into public.products (id, barcode, product_name, price, status) values
+insert into public.products (id, barcode, product_name, price, status) overriding system value values
   (1, '198051679554694', 'Nice Facial Tissue', 130.0, 'Active'),
   (2, '4800054112348', 'Growers Savory Hot Peanuts', 89.0, 'Active'),
   (3, '4800514718882', 'Bounty Fresh Large Egg', 145.0, 'Active'),
