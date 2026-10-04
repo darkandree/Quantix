@@ -52,7 +52,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
   const [sync, setSync] = useState('Connecting…');
   const [splash, setSplash] = useState({ visible: true, hide: false, text: 'Syncing with Supabase…' });
   const [dashMonth, setDashMonth] = useState(currentMonthKey());
-  const [tableMonth, setTableMonth] = useState(currentMonthKey());
+  const [tableMonth, setTableMonth] = useState('all');
 
   const [expenseModal, setExpenseModal] = useState(false);
   const [productModal, setProductModal] = useState(false);
