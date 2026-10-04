@@ -6,7 +6,7 @@ import { usePager } from '../hooks/usePager.js';
 import { byNewest, displayDate, fmt } from '../lib/format.js';
 import { monthKey } from '../lib/format.js';
 
-const COLUMNS = [['date', 'Date'], ['due', 'Due date'], ['category', 'Category'], ['type', 'Type'], ['amount', 'Amount']];
+const COLUMNS = [['date', 'Date'], ['category', 'Category'], ['type', 'Type'], ['amount', 'Amount']];
 const BLANK = { month: 'all', category: '', from: '', to: '', min: '', max: '' };
 
 export default function ExpensesPage({ expenses, month, onMonthChange, onAdd, onEdit, onDelete, search: globalSearch }) {
@@ -14,7 +14,7 @@ export default function ExpensesPage({ expenses, month, onMonthChange, onAdd, on
   const [type, setType] = useState('');
   const [open, setOpen] = useState(false);
   const [f, setF] = useState(BLANK);
-  const [shown, setShown] = useState({ date: true, due: true, category: true, type: true, amount: true });
+  const [shown, setShown] = useState({ date: true, category: true, type: true, amount: true });
   const monthRef = useRef(month);
 
   // The month lives in App state; mirror it into the filter panel.
@@ -97,9 +97,7 @@ export default function ExpensesPage({ expenses, month, onMonthChange, onAdd, on
           <table>
             <thead>
               <tr>
-                {shown.date && <th>Date</th>}
-                {shown.due && <th>Due date</th>}
-                {shown.category && <th>Category</th>}
+                {shown.date && <th>Date</th>}                {shown.category && <th>Category</th>}
                 {shown.type && <th>Type</th>}
                 {shown.amount && <th className="num">Amount</th>}
                 <th />
@@ -112,9 +110,7 @@ export default function ExpensesPage({ expenses, month, onMonthChange, onAdd, on
                 const note = [e.product_name, e.remarks].filter(Boolean).join(' · ');
                 return (
                   <tr key={e.id}>
-                    {shown.date && <td className="date">{displayDate(e.date)}</td>}
-                    {shown.due && <td className="date">{e.due_date ? displayDate(e.due_date) : '—'}</td>}
-                    {shown.category && (
+                    {shown.date && <td className="date">{displayDate(e.date)}</td>}                    {shown.category && (
                       <td className="category">
                         <span className="cat-name">{e.expense_category}</span>
                         {note && <span className="note">{note}</span>}

@@ -5,6 +5,7 @@ import { LockIcon, TrendIcon } from './Icons.jsx';
 export default function CategoryModal({ category, onSave, onClose }) {
   const [type, setType] = useState(category?.expense_type || 'Variable Expenses');
   const [name, setName] = useState(category?.expense_category || '');
+  const [dueDate, setDueDate] = useState(category?.due_date ? String(category.due_date).slice(0, 10) : '');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -13,7 +14,10 @@ export default function CategoryModal({ category, onSave, onClose }) {
     setError('');
     setSaving(true);
     try {
-      await onSave({ expense_type: type, expense_category: name.trim() });
+      const payload = { expense_type: type, expense_category: name.trim() };
+      // Only send due_date when set or being cleared, so saves still work before the column exists.
+      if (dueDate || category?.due_date) payload.due_date = dueDate || null;
+      await onSave(payload);
     } catch (err) {
       setError(/duplicate|unique/i.test(err.message) ? 'That category already exists for this type.' : 'Could not save: ' + err.message);
       setSaving(false);
@@ -38,6 +42,10 @@ export default function CategoryModal({ category, onSave, onClose }) {
         <div className="field">
           <label htmlFor="categoryNameInput">Category name<span className="required-mark">*</span></label>
           <input id="categoryNameInput" type="text" required autoFocus placeholder="e.g. Insurance" value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="categoryDueInput">Due date (optional)</label>
+          <input id="categoryDueInput" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </div>
         {category && (
           <div className="hint-text">Renaming also updates every existing expense that uses “{category.expense_category}”.</div>

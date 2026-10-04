@@ -293,3 +293,13 @@ html[data-theme="dark"] .sidebar{box-shadow:6px 0 24px rgba(0,0,0,0.45);}
 @keyframes lbPulse{0%,100%{transform:scaleY(1);}50%{transform:scaleY(.55);}}
 @keyframes lbRise{0%{transform:translateY(0) rotate(0);opacity:0;}10%{opacity:.35;}85%{opacity:.25;}100%{transform:translateY(-115vh) rotate(25deg);opacity:0;}}
 @media (prefers-reduced-motion:reduce){.lb-slide g,.lb-bars rect,.lb-coin{animation:none;}}
+
+/* ---------- Compact toast, no coloured badge ---------- */
+.toast{min-width:230px;max-width:320px;padding:10px 14px;gap:10px;border-radius:12px;box-shadow:0 8px 22px rgba(16,24,40,0.14);}
+.toast-badge,.toast.success .toast-badge,.toast.error .toast-badge,.toast.delete .toast-badge{width:auto;height:auto;background:none;border-radius:0;}
+.toast-badge .toast-icon{width:18px;height:18px;}
+.toast-title{font-size:13.5px;}
+.toast-message{font-size:12.5px;margin-top:1px;}
+.toast-close{padding:2px;}
+.toast-close svg{width:14px;height:14px;}
+.toast-container{top:74px;gap:8px;}

@@ -100,8 +100,8 @@ create policy "avatars own update"  on storage.objects for update to authenticat
 create policy "avatars own delete"  on storage.objects for delete to authenticated
   using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 -- ---------- Later additions ----------
--- Due date on expenses (optional).
-alter table public.expenses add column if not exists due_date date;
+-- Due date lives on the category (expense_details), not on individual expenses.
+alter table public.expense_details add column if not exists due_date date;
 
 -- Expense Category page: signed-in Active users can manage categories.
 -- Category names are unique within a type.

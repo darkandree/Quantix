@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Pager, Toolbar } from './DataTableBits.jsx';
 import { PencilIcon, TrashIcon } from './Icons.jsx';
 import { usePager } from '../hooks/usePager.js';
+import { displayDate } from '../lib/format.js';
 
 export default function CategoriesPage({ rows, loaded, usage, onAdd, onEdit, onDelete, search: globalSearch }) {
   const [search, setSearch] = useState('');
@@ -35,11 +36,11 @@ export default function CategoriesPage({ rows, loaded, usage, onAdd, onEdit, onD
         <div className="table-scroll">
           <table>
             <thead>
-              <tr><th>Category</th><th>Type</th><th className="num">Expenses logged</th><th /></tr>
+              <tr><th>Category</th><th>Type</th><th>Due date</th><th className="num">Expenses logged</th><th /></tr>
             </thead>
             <tbody>
               {pager.slice.length === 0 && (
-                <tr className="empty-row"><td colSpan={4}>{loaded ? 'No categories match your filters.' : 'Loading categories…'}</td></tr>
+                <tr className="empty-row"><td colSpan={5}>{loaded ? 'No categories match your filters.' : 'Loading categories…'}</td></tr>
               )}
               {pager.slice.map((r) => {
                 const fixed = r.expense_type === 'Fixed Expenses';
@@ -47,6 +48,7 @@ export default function CategoriesPage({ rows, loaded, usage, onAdd, onEdit, onD
                   <tr key={r.id}>
                     <td className="category"><span className="cat-name">{r.expense_category}</span></td>
                     <td><span className={'tag ' + (fixed ? 'fixed' : 'variable')}>{fixed ? 'Fixed' : 'Variable'}</span></td>
+                    <td className="date">{r.due_date ? displayDate(r.due_date) : '—'}</td>
                     <td className="amount">{usage[`${r.expense_type}|${r.expense_category}`] || 0}</td>
                     <td className="actions">
                       <button className="del-btn" aria-label="Edit category" onClick={() => onEdit(r)}><PencilIcon width={15} height={15} /></button>
