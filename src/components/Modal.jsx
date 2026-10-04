@@ -27,12 +27,3 @@ export function ConfirmModal({ label, onCancel, onConfirm }) {
     </Modal>
   );
 }
-
-export function Saving({ text }) {
-  return (
-    <div className="modal-loading">
-      <div className="modal-spinner" />
-      <div className="modal-loading-text">{text}</div>
-    </div>
-  );
-}

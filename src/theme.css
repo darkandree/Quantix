@@ -193,3 +193,5 @@ html[data-theme="dark"] .sidebar{box-shadow:6px 0 24px rgba(0,0,0,0.45);}
 .dt-page.on{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast);}
 .dt-page:disabled{opacity:.4;cursor:default;}
 .dt-gap{color:var(--ink-faint);padding:0 2px;}
+
+.actions{white-space:nowrap;}

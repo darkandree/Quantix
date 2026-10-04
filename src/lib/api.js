@@ -35,6 +35,10 @@ export async function addExpense(expense) {
   return num('amount')(check(await supabase.from('expenses').insert(expense).select().single()));
 }
 
+export async function updateExpense(id, changes) {
+  return num('amount')(check(await supabase.from('expenses').update(changes).eq('id', id).select().single()));
+}
+
 export async function deleteExpense(id) {
   check(await supabase.from('expenses').delete().eq('id', id));
 }

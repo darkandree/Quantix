@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Modal, { Saving } from './Modal.jsx';
+import Modal from './Modal.jsx';
 import BarcodeField from './BarcodeField.jsx';
 import { useScanner } from '../hooks/useScanner.js';
 
@@ -27,7 +27,6 @@ export default function ProductModal({ onSave, onClose }) {
 
   return (
     <Modal onClose={onClose}>
-      {saving && <Saving text="Saving product…" />}
       <h2>Add product</h2>
       <form onSubmit={submit}>
         <div className="field">

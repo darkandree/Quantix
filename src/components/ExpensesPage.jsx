@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MonthSelect from './MonthSelect.jsx';
 import { AdvancedPanel, PanelField, Pager, Toolbar } from './DataTableBits.jsx';
-import { TrashIcon } from './Icons.jsx';
+import { PencilIcon, TrashIcon } from './Icons.jsx';
 import { usePager } from '../hooks/usePager.js';
 import { byNewest, displayDate, fmt } from '../lib/format.js';
 import { monthKey } from '../lib/format.js';
@@ -9,7 +9,7 @@ import { monthKey } from '../lib/format.js';
 const COLUMNS = [['date', 'Date'], ['category', 'Category'], ['type', 'Type'], ['amount', 'Amount']];
 const BLANK = { month: 'all', category: '', from: '', to: '', min: '', max: '' };
 
-export default function ExpensesPage({ expenses, month, onMonthChange, onAdd, onDelete, search: globalSearch }) {
+export default function ExpensesPage({ expenses, month, onMonthChange, onAdd, onEdit, onDelete, search: globalSearch }) {
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
   const [open, setOpen] = useState(false);
@@ -121,6 +121,7 @@ export default function ExpensesPage({ expenses, month, onMonthChange, onAdd, on
                     {shown.type && <td><span className={'tag ' + (fixed ? 'fixed' : 'variable')}>{fixed ? 'Fixed' : 'Variable'}</span></td>}
                     {shown.amount && <td className="amount">{fmt(e.amount)}</td>}
                     <td className="actions">
+                      <button className="del-btn" aria-label="Edit expense" onClick={() => onEdit(e)}><PencilIcon width={15} height={15} /></button>
                       <button className="del-btn" aria-label="Delete expense" onClick={() => onDelete(e.id)}><TrashIcon width={15} height={15} /></button>
                     </td>
                   </tr>

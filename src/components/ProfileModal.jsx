@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import Modal, { Saving } from './Modal.jsx';
+import Modal from './Modal.jsx';
 import Avatar from './Avatar.jsx';
 import * as api from '../lib/api.js';
 
@@ -36,7 +36,6 @@ export default function ProfileModal({ profile, onSaved, onClose }) {
 
   return (
     <Modal onClose={onClose}>
-      {saving && <Saving text="Saving profile…" />}
       <h2>Edit profile</h2>
       <form onSubmit={submit}>
         <div className="field avatar-field">

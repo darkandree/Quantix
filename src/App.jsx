@@ -54,7 +54,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
   const [dashMonth, setDashMonth] = useState(currentMonthKey());
   const [tableMonth, setTableMonth] = useState('all');
 
-  const [expenseModal, setExpenseModal] = useState(false);
+  const [expenseModal, setExpenseModal] = useState(null); // null = closed, {} = new, expense row = editing
   const [productModal, setProductModal] = useState(false);
   const [profileModal, setProfileModal] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null); // { kind, id }
@@ -128,10 +128,16 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
   }
 
   async function saveExpense(payload) {
-    const row = await api.addExpense(payload);
-    setExpenses((list) => [row, ...list]);
-    setExpenseModal(false);
-    toast('Expense added successfully', 'success');
+    if (expenseModal?.id) {
+      const row = await api.updateExpense(expenseModal.id, payload);
+      setExpenses((list) => list.map((e) => (e.id === row.id ? row : e)));
+      toast('Expense updated', 'success');
+    } else {
+      const row = await api.addExpense(payload);
+      setExpenses((list) => [row, ...list]);
+      toast('Expense added successfully', 'success');
+    }
+    setExpenseModal(null);
   }
 
   async function saveProduct(payload) {
@@ -200,7 +206,8 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
                 month={tableMonth}
                 onMonthChange={setTableMonth}
                 search={search}
-                onAdd={() => setExpenseModal(true)}
+                onAdd={() => setExpenseModal({})}
+                onEdit={(expense) => setExpenseModal(expense)}
                 onDelete={(id) => setPendingDelete({ kind: 'expense', id })}
               />
             )}
@@ -219,7 +226,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
       </div>
 
       {expenseModal && (
-        <ExpenseModal categories={categories} ensureProducts={ensureProducts} onSave={saveExpense} onClose={() => setExpenseModal(false)} />
+        <ExpenseModal expense={expenseModal.id ? expenseModal : null} categories={categories} ensureProducts={ensureProducts} onSave={saveExpense} onClose={() => setExpenseModal(null)} />
       )}
       {productModal && <ProductModal onSave={saveProduct} onClose={() => setProductModal(false)} />}
       {profileModal && <ProfileModal profile={profile} onSaved={profileSaved} onClose={() => setProfileModal(false)} />}

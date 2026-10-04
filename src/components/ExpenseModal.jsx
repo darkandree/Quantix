@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import Modal, { Saving } from './Modal.jsx';
+import Modal from './Modal.jsx';
 import BarcodeField from './BarcodeField.jsx';
 import { CloseIcon, LockIcon, SaveIcon, TrendIcon } from './Icons.jsx';
 import { useScanner } from '../hooks/useScanner.js';
 import { fmt, todayISO } from '../lib/format.js';
 
-export default function ExpenseModal({ categories, products, ensureProducts, onSave, onClose }) {
-  const [type, setType] = useState('Variable Expenses');
-  const [category, setCategory] = useState('');
-  const [date, setDate] = useState(todayISO());
+export default function ExpenseModal({ expense, categories, ensureProducts, onSave, onClose }) {
+  const [type, setType] = useState(expense?.expense_type || 'Variable Expenses');
+  const [category, setCategory] = useState(expense?.expense_category || '');
+  const [date, setDate] = useState(expense ? String(expense.date).slice(0, 10) : todayISO());
   const [barcode, setBarcode] = useState('');
-  const [amount, setAmount] = useState('');
-  const [product, setProduct] = useState('');
-  const [note, setNote] = useState('');
+  const [amount, setAmount] = useState(expense ? String(expense.amount) : '');
+  const [product, setProduct] = useState(expense?.product_name || '');
+  const [note, setNote] = useState(expense?.remarks || '');
   const [barcodeHint, setBarcodeHint] = useState(null); // { text, matched }
   const [amountError, setAmountError] = useState(false);
   const [error, setError] = useState('');
@@ -34,7 +34,9 @@ export default function ExpenseModal({ categories, products, ensureProducts, onS
   }
 
   const scanner = useScanner((text) => { setBarcode(text); lookup(text); });
-  const sortedCategories = [...(categories[type] || [])].sort((a, b) => a.localeCompare(b));
+  const options = new Set(categories[type] || []);
+  if (expense && expense.expense_type === type) options.add(expense.expense_category); // keep a category that was since removed
+  const sortedCategories = [...options].sort((a, b) => a.localeCompare(b));
 
   function changeType(next) {
     setType(next);
@@ -65,8 +67,7 @@ export default function ExpenseModal({ categories, products, ensureProducts, onS
 
   return (
     <Modal onClose={onClose}>
-      {saving && <Saving text="Saving expense…" />}
-      <h2>Add expense</h2>
+      <h2>{expense ? 'Edit expense' : 'Add expense'}</h2>
       <form onSubmit={submit}>
         <div className="field">
           <label>Type<span className="required-mark">*</span></label>
@@ -120,7 +121,7 @@ export default function ExpenseModal({ categories, products, ensureProducts, onS
         <div className="error" style={{ display: error ? 'block' : 'none' }}>{error}</div>
         <div className="modal-actions">
           <button type="button" className="btn-ghost" onClick={onClose}><CloseIcon width={15} height={15} />Cancel</button>
-          <button type="submit" className="btn-primary" disabled={saving}><SaveIcon />{saving ? 'Saving…' : 'Save expense'}</button>
+          <button type="submit" className="btn-primary" disabled={saving}><SaveIcon />{saving ? 'Saving…' : expense ? 'Update expense' : 'Save expense'}</button>
         </div>
       </form>
     </Modal>
