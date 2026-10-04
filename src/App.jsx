@@ -199,7 +199,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
             onSignOut={() => supabase.auth.signOut()}
           />
           <main className="content">
-            {page === 'dashboard' && <Dashboard expenses={expenses} month={dashMonth} onMonthChange={setDashMonth} />}
+            {page === 'dashboard' && <Dashboard expenses={expenses} month={dashMonth} onMonthChange={setDashMonth} fixedCategories={categories['Fixed Expenses'] || []} />}
             {page === 'expenses' && (
               <ExpensesPage
                 expenses={expenses}

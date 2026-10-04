@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import MonthSelect from './MonthSelect.jsx';
 import MonthlyReport from './MonthlyReport.jsx';
-import { CalendarIcon, ExpensesIcon, LayersIcon, LockIcon, TrendIcon, WalletIcon } from './Icons.jsx';
-import { byNewest, displayDate, expensesForMonth, fmt, prevMonthKey, totalsFor } from '../lib/format.js';
+import { CalendarIcon, LockIcon, TrendIcon, WalletIcon } from './Icons.jsx';
+import { byNewest, displayDate, expensesForMonth, fmt, monthLabel, prevMonthKey, totalsFor } from '../lib/format.js';
 
 function Trend({ current, previous, enabled }) {
   if (!enabled) return <div className="trend-indicator" />;
@@ -22,7 +22,48 @@ function Trend({ current, previous, enabled }) {
   );
 }
 
-export default function Dashboard({ expenses, month, onMonthChange }) {
+// Which fixed categories have an expense logged in the selected month.
+function FixedStatus({ expenses, month, fixedCategories }) {
+  const rows = useMemo(() => {
+    if (month === 'all') return [];
+    const paid = {};
+    expensesForMonth(expenses, month)
+      .filter((e) => e.expense_type === 'Fixed Expenses')
+      .forEach((e) => {
+        const p = paid[e.expense_category] || (paid[e.expense_category] = { amount: 0, date: '' });
+        p.amount += Number(e.amount || 0);
+        if (String(e.date) > p.date) p.date = String(e.date);
+      });
+    const names = new Set([...fixedCategories, ...Object.keys(paid)]);
+    return [...names].sort((a, b) => a.localeCompare(b)).map((name) => ({ name, paid: paid[name] }));
+  }, [expenses, month, fixedCategories]);
+
+  const paidCount = rows.filter((r) => r.paid).length;
+
+  return (
+    <div className="card">
+      <div className="report-header">
+        <h3>Fixed expenses status</h3>
+        {month !== 'all' && <span className="report-hint">{paidCount} of {rows.length} paid · {monthLabel(month)}</span>}
+      </div>
+      {month === 'all'
+        ? <div className="empty-note">Select a specific month to see which fixed expenses are paid.</div>
+        : rows.length === 0
+          ? <div className="empty-note">No fixed categories found.</div>
+          : rows.map((r) => (
+            <div className="recent-item" key={r.name}>
+              <div>
+                <div className="rec-cat">{r.name}</div>
+                <div className="rec-date">{r.paid ? `${fmt(r.paid.amount)} · paid ${displayDate(r.paid.date)}` : 'No payment logged this month'}</div>
+              </div>
+              <span className={'tag ' + (r.paid ? 'fixed' : 'variable')}>{r.paid ? 'Paid' : 'Unpaid'}</span>
+            </div>
+          ))}
+    </div>
+  );
+}
+
+export default function Dashboard({ expenses, month, onMonthChange, fixedCategories }) {
   const list = useMemo(() => expensesForMonth(expenses, month), [expenses, month]);
   const cur = useMemo(() => totalsFor(list), [list]);
   const hasPrev = month !== 'all';
@@ -33,7 +74,6 @@ export default function Dashboard({ expenses, month, onMonthChange }) {
     list.forEach((e) => { totals[e.expense_category] = (totals[e.expense_category] || 0) + Number(e.amount || 0); });
     return Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 6);
   }, [list]);
-  const categories = useMemo(() => [...new Set(list.map((e) => e.expense_category))], [list]);
   const recent = useMemo(() => [...list].sort(byNewest).slice(0, 5), [list]);
 
   const fixedPct = cur.totalAll > 0 ? (cur.totalFixed / cur.totalAll) * 100 : 0;
@@ -53,10 +93,6 @@ export default function Dashboard({ expenses, month, onMonthChange }) {
       </div>
 
       <div className="stat-grid">
-        <div className="stat-card">
-          <div><div className="stat-num">{list.length}</div><div className="stat-label">Expenses</div></div>
-          <span className="stat-icon neutral"><LayersIcon /></span>
-        </div>
         <div className="stat-card">
           <div>
             <div className="stat-num">{fmt(cur.totalAll)}</div><div className="stat-label">Total spent</div>
@@ -78,30 +114,9 @@ export default function Dashboard({ expenses, month, onMonthChange }) {
           </div>
           <span className="stat-icon red"><TrendIcon /></span>
         </div>
-        <div className="stat-card">
-          <div><div className="stat-num red">{categories.length}</div><div className="stat-label">Categories used</div></div>
-          <span className="stat-icon red"><ExpensesIcon /></span>
-        </div>
       </div>
 
-      <div className="card">
-        <h3>Spending by Type</h3>
-        <table className="plain-table">
-          <thead><tr><th>Name</th><th className="num">Entries</th><th className="num">Amount</th><th className="num">Share</th></tr></thead>
-          <tbody>
-            {[['Fixed Expenses', 'Fixed Expenses', cur.totalFixed], ['Variable Expenses', 'Variable Expenses', cur.totalVariable]].map(([label, type, amt]) => (
-              <tr key={type}>
-                <td>{label}</td>
-                <td className="num">{list.filter((e) => e.expense_type === type).length}</td>
-                <td className="num">{fmt(amt)}</td>
-                <td className="num">{cur.totalAll > 0 ? ((amt / cur.totalAll) * 100).toFixed(1) + '%' : '�'}</td>
-              </tr>
-            ))}
-            <tr className="total"><td>Total</td><td className="num">{list.length}</td><td className="num">{fmt(cur.totalAll)}</td><td className="num">{cur.totalAll > 0 ? '100%' : '�'}</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div className="dash-grid">
+      <div className="dash-grid even">
         <div className="card">
           <h3>Fixed vs Variable</h3>
           <div className="chart-row">
@@ -114,6 +129,10 @@ export default function Dashboard({ expenses, month, onMonthChange }) {
             </div>
           </div>
         </div>
+        <FixedStatus expenses={expenses} month={month} fixedCategories={fixedCategories} />
+      </div>
+
+      <div className="dash-grid even">
         <div className="card">
           <h3>Top categories</h3>
           {categoryTotals.length === 0
@@ -125,21 +144,20 @@ export default function Dashboard({ expenses, month, onMonthChange }) {
               </div>
             ))}
         </div>
-      </div>
-
-      <div className="card">
-        <h3>Recent expenses</h3>
-        {recent.length === 0
-          ? <div className="empty-note">No expenses for this period.</div>
-          : recent.map((e) => (
-            <div className="recent-item" key={e.id}>
-              <div>
-                <div className="rec-cat">{e.expense_category}</div>
-                <div className="rec-date">{displayDate(e.date)}</div>
+        <div className="card">
+          <h3>Recent expenses</h3>
+          {recent.length === 0
+            ? <div className="empty-note">No expenses for this period.</div>
+            : recent.map((e) => (
+              <div className="recent-item" key={e.id}>
+                <div>
+                  <div className="rec-cat">{e.expense_category}</div>
+                  <div className="rec-date">{displayDate(e.date)}</div>
+                </div>
+                <div className="rec-amt">{fmt(e.amount)}</div>
               </div>
-              <div className="rec-amt">{fmt(e.amount)}</div>
-            </div>
-          ))}
+            ))}
+        </div>
       </div>
 
       <MonthlyReport expenses={expenses} month={month} />
