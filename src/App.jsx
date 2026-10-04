@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import Topbar from './components/Topbar.jsx';
 import Dashboard from './components/Dashboard.jsx';
@@ -14,7 +14,7 @@ import Toasts from './components/Toasts.jsx';
 import { CloseIcon, MenuIcon } from './components/Icons.jsx';
 import * as api from './lib/api.js';
 import { isConfigured, supabase } from './lib/supabase.js';
-import { currentMonthKey } from './lib/format.js';
+import { byNewest, currentMonthKey, displayDate, fmt } from './lib/format.js';
 
 const FALLBACK_CATEGORIES = {
   'Variable Expenses': ['Laundry', 'Fuel', 'Groceries', 'Food Order', 'Online', 'Credit Card - BDO JCB Lucky Cat', 'Credit Card - Shop More', 'Credit Card - Eastwest', 'Unit Transfer Expenses', 'Miscellaneous'],
@@ -122,10 +122,62 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
     if (next === 'users' && !usersLoaded) loadUsers();
   }
 
-  function onSearch(value) {
-    setSearch(value);
-    if (value && page === 'dashboard') navigate('expenses');
+  // Make sure everything searchable has been loaded once the search box is used.
+  function onSearchFocus() {
+    if (!productsLoaded) ensureProducts();
+    if (!usersLoaded) loadUsers();
   }
+
+  const searchGroups = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    const terms = q.split(/\s+/);
+    const matches = (...values) => {
+      const hay = values.filter(Boolean).join(' ').toLowerCase();
+      return terms.every((t) => hay.includes(t));
+    };
+    const go = (nextPage, term, extra) => () => {
+      if (extra) extra();
+      setSearch(term);
+      navigate(nextPage);
+    };
+    const LIMIT = 5;
+    const groups = [];
+
+    const pages = [['dashboard', 'Dashboard'], ['expenses', 'Expenses'], ['products', 'Products'], ['users', 'Users']]
+      .filter(([, label]) => matches(label))
+      .map(([id, label]) => ({ key: 'page-' + id, title: label, sub: 'Go to page', pick: go(id, '') }));
+    if (pages.length) groups.push({ title: 'Pages', items: pages });
+
+    const cats = [...new Set([...expenses.map((e) => e.expense_category), ...Object.values(categories).flat()])]
+      .filter((c) => matches(c)).sort((a, b) => a.localeCompare(b)).slice(0, LIMIT)
+      .map((c) => ({ key: 'cat-' + c, title: c, sub: 'Category', pick: go('expenses', c, () => setTableMonth('all')) }));
+    if (cats.length) groups.push({ title: 'Categories', items: cats });
+
+    const exps = expenses
+      .filter((e) => matches(e.expense_category, e.product_name, e.remarks, e.expense_type))
+      .sort(byNewest).slice(0, LIMIT)
+      .map((e) => ({
+        key: 'exp-' + e.id,
+        title: e.expense_category,
+        sub: [e.product_name, e.remarks, displayDate(e.date)].filter(Boolean).join(' · '),
+        right: fmt(e.amount),
+        pick: go('expenses', [e.expense_category, e.product_name].filter(Boolean).join(' '), () => setTableMonth('all')),
+      }));
+    if (exps.length) groups.push({ title: 'Expenses', items: exps });
+
+    const prods = products.filter((p) => matches(p.product_name, p.barcode)).slice(0, LIMIT)
+      .map((p) => ({ key: 'prod-' + p.id, title: p.product_name, sub: p.barcode || 'No barcode', right: fmt(p.price), pick: go('products', p.product_name) }));
+    if (prods.length) groups.push({ title: 'Products', items: prods });
+
+    const people = users.filter((u) => matches(u.full_name, u.email)).slice(0, LIMIT)
+      .map((u) => ({ key: 'user-' + u.id, title: u.full_name || u.email, sub: u.email, right: u.status, pick: go('users', u.email) }));
+    if (people.length) groups.push({ title: 'Users', items: people });
+
+    return groups;
+  // navigate only calls stable setters and loaders, so it is safe to omit.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, expenses, products, users, categories]);
 
   async function saveExpense(payload) {
     if (expenseModal?.id) {
@@ -191,7 +243,9 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
         <div className="main-col">
           <Topbar
             search={search}
-            onSearch={onSearch}
+            onSearch={setSearch}
+            onSearchFocus={onSearchFocus}
+            groups={searchGroups}
             theme={theme}
             onToggleTheme={onToggleTheme}
             profile={profile}

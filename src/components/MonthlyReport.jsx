@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { CalendarIcon } from './Icons.jsx';
 import { daysInMonthFor, fmt, monthKey, monthLabel, parseExpenseDate } from '../lib/format.js';
 
 const SECTIONS = [
@@ -165,7 +166,7 @@ export default function MonthlyReport({ expenses, month }) {
   return (
     <div className="card">
       <div className="report-header">
-        <h3>Monthly report</h3>
+        <h3 className="with-icon"><CalendarIcon />Monthly report</h3>
         <span className="report-hint">{hint}</span>
       </div>
       <div className="report-scroll">{body}</div>

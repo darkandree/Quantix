@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import MonthSelect from './MonthSelect.jsx';
 import MonthlyReport from './MonthlyReport.jsx';
-import { CalendarIcon, LockIcon, TrendIcon, WalletIcon } from './Icons.jsx';
+import { BarChartIcon, CalendarIcon, ClockIcon, LockIcon, PieIcon, ShieldCheckIcon, TrendIcon, WalletIcon } from './Icons.jsx';
 import { byNewest, displayDate, expensesForMonth, fmt, monthLabel, prevMonthKey, totalsFor } from '../lib/format.js';
 
 function Trend({ current, previous, enabled }) {
@@ -43,7 +43,7 @@ function FixedStatus({ expenses, month, fixedCategories }) {
   return (
     <div className="card">
       <div className="report-header">
-        <h3>Fixed expenses status</h3>
+        <h3 className="with-icon"><ShieldCheckIcon />Fixed expenses status</h3>
         {month !== 'all' && <span className="report-hint">{paidCount} of {rows.length} paid · {monthLabel(month)}</span>}
       </div>
       {month === 'all'
@@ -118,14 +118,18 @@ export default function Dashboard({ expenses, month, onMonthChange, fixedCategor
 
       <div className="dash-grid even">
         <div className="card">
-          <h3>Fixed vs Variable</h3>
-          <div className="chart-row">
+          <h3 className="with-icon"><PieIcon />Fixed vs Variable</h3>
+          <div className="chart-row big">
             <div className="donut" style={{ background: donutBg }}>
-              <div className="donut-center">{cur.totalAll > 0 ? fmt(cur.totalAll) : 'No data'}</div>
+              <div className="donut-center">
+                {cur.totalAll > 0
+                  ? <><span className="donut-label">Total</span><strong>{fmt(cur.totalAll)}</strong></>
+                  : 'No data'}
+              </div>
             </div>
             <div className="legend">
-              <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--fixed)' }} />Fixed<span className="amt">{fmt(cur.totalFixed)}</span></div>
-              <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--variable)' }} />Variable<span className="amt">{fmt(cur.totalVariable)}</span></div>
+              <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--fixed)' }} />Fixed<span className="amt">{fmt(cur.totalFixed)}</span><span className="pct">{fixedPct.toFixed(1)}%</span></div>
+              <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--variable)' }} />Variable<span className="amt">{fmt(cur.totalVariable)}</span><span className="pct">{cur.totalAll > 0 ? (100 - fixedPct).toFixed(1) : '0.0'}%</span></div>
             </div>
           </div>
         </div>
@@ -134,7 +138,7 @@ export default function Dashboard({ expenses, month, onMonthChange, fixedCategor
 
       <div className="dash-grid even">
         <div className="card">
-          <h3>Top categories</h3>
+          <h3 className="with-icon"><BarChartIcon />Top categories</h3>
           {categoryTotals.length === 0
             ? <div className="empty-note">No expenses for this period.</div>
             : categoryTotals.map(([cat, amt]) => (
@@ -145,7 +149,7 @@ export default function Dashboard({ expenses, month, onMonthChange, fixedCategor
             ))}
         </div>
         <div className="card">
-          <h3>Recent expenses</h3>
+          <h3 className="with-icon"><ClockIcon />Recent expenses</h3>
           {recent.length === 0
             ? <div className="empty-note">No expenses for this period.</div>
             : recent.map((e) => (
