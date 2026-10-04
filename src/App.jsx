@@ -5,6 +5,8 @@ import Dashboard from './components/Dashboard.jsx';
 import ExpensesPage from './components/ExpensesPage.jsx';
 import ProductsPage from './components/ProductsPage.jsx';
 import UsersPage from './components/UsersPage.jsx';
+import CategoriesPage from './components/CategoriesPage.jsx';
+import CategoryModal from './components/CategoryModal.jsx';
 import ExpenseModal from './components/ExpenseModal.jsx';
 import ProductModal from './components/ProductModal.jsx';
 import ProfileModal from './components/ProfileModal.jsx';
@@ -38,7 +40,20 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
   const [productsLoaded, setProductsLoaded] = useState(false);
   const [users, setUsers] = useState([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
-  const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
+  const [categoryRows, setCategoryRows] = useState([]);
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
+  const [categoryModal, setCategoryModal] = useState(null); // null = closed, {} = new, row = editing
+  const categories = useMemo(() => {
+    if (!categoriesLoaded) return FALLBACK_CATEGORIES;
+    const grouped = { 'Variable Expenses': [], 'Fixed Expenses': [] };
+    categoryRows.forEach((r) => grouped[r.expense_type]?.push(r.expense_category));
+    return grouped;
+  }, [categoryRows, categoriesLoaded]);
+  const categoryUsage = useMemo(() => {
+    const counts = {};
+    expenses.forEach((e) => { const k = `${e.expense_type}|${e.expense_category}`; counts[k] = (counts[k] || 0) + 1; });
+    return counts;
+  }, [expenses]);
   const [sync, setSync] = useState('Connecting…');
   const [signOutConfirm, setSignOutConfirm] = useState(false);
   const [dashMonth, setDashMonth] = useState(currentMonthKey());
@@ -62,9 +77,9 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
     let cancelled = false;
     (async () => {
       setSync('Syncing…');
-      const [cats, exps] = await Promise.allSettled([api.fetchCategories(), api.fetchExpenses()]);
+      const [cats, exps] = await Promise.allSettled([api.fetchCategoryRows(), api.fetchExpenses()]);
       if (cancelled) return;
-      if (cats.status === 'fulfilled' && Object.values(cats.value).some((l) => l.length)) setCategories(cats.value);
+      if (cats.status === 'fulfilled') { setCategoryRows(cats.value); setCategoriesLoaded(true); }
       const ok = exps.status === 'fulfilled';
       if (ok) setExpenses(exps.value);
       else console.error(exps.reason);
@@ -142,7 +157,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
     const LIMIT = 5;
     const groups = [];
 
-    const pages = [['dashboard', 'Dashboard'], ['expenses', 'Expenses'], ['products', 'Products'], ['users', 'Users']]
+    const pages = [['dashboard', 'Dashboard'], ['expenses', 'Expenses'], ['products', 'Products'], ['categories', 'Expense Category'], ['users', 'Users']]
       .filter(([, label]) => matches(label))
       .map(([id, label]) => ({ key: 'page-' + id, title: label, sub: 'Go to page', pick: go(id, '') }));
     if (pages.length) groups.push({ title: 'Pages', items: pages });
@@ -205,15 +220,36 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
     toast('Profile updated', 'success');
   }
 
+  async function saveCategory(payload) {
+    if (categoryModal?.id) {
+      const row = await api.updateCategory(categoryModal, payload);
+      setCategoryRows((list) => list.map((r) => (r.id === row.id ? row : r)));
+      // Mirror the rename onto the expenses already loaded.
+      setExpenses((list) => list.map((e) => (
+        e.expense_category === categoryModal.expense_category && e.expense_type === categoryModal.expense_type
+          ? { ...e, expense_category: row.expense_category, expense_type: row.expense_type } : e)));
+      toast('Category updated', 'success');
+    } else {
+      const row = await api.addCategory(payload);
+      setCategoryRows((list) => [...list, row]);
+      toast('Category added successfully', 'success');
+    }
+    setCategoryModal(null);
+  }
+
   async function confirmDelete() {
     const { kind, id } = pendingDelete;
     setPendingDelete(null);
-    const isExpense = kind === 'expense';
-    const [list, setList, remove] = isExpense ? [expenses, setExpenses, api.deleteExpense] : [products, setProducts, api.deleteProduct];
+    const target = {
+      expense: [expenses, setExpenses, api.deleteExpense, 'Expense'],
+      product: [products, setProducts, api.deleteProduct, 'Product'],
+      category: [categoryRows, setCategoryRows, api.deleteCategory, 'Category'],
+    }[kind];
+    const [list, setList, remove, name] = target;
     setList(list.filter((r) => r.id !== id)); // optimistic
     try {
       await remove(id);
-      toast(`${isExpense ? 'Expense' : 'Product'} deleted`, 'delete');
+      toast(`${name} deleted`, 'delete');
     } catch (err) {
       setList(list);
       toast('Could not delete from Supabase: ' + err.message, 'error');
@@ -270,6 +306,17 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
                 onDelete={(id) => setPendingDelete({ kind: 'product', id })}
               />
             )}
+            {page === 'categories' && (
+              <CategoriesPage
+                rows={categoryRows}
+                loaded={categoriesLoaded}
+                usage={categoryUsage}
+                search={search}
+                onAdd={() => setCategoryModal({})}
+                onEdit={(row) => setCategoryModal(row)}
+                onDelete={(row) => setPendingDelete({ kind: 'category', id: row.id, used: categoryUsage[`${row.expense_type}|${row.expense_category}`] || 0 })}
+              />
+            )}
             {page === 'users' && <UsersPage users={users} loaded={usersLoaded} me={profile.id} search={search} />}
           </main>
         </div>
@@ -290,7 +337,13 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
           onConfirm={() => supabase.auth.signOut()}
         />
       )}
-      {pendingDelete && <ConfirmModal label={pendingDelete.kind} onCancel={() => setPendingDelete(null)} onConfirm={confirmDelete} />}
+      {categoryModal && <CategoryModal category={categoryModal.id ? categoryModal : null} onSave={saveCategory} onClose={() => setCategoryModal(null)} />}
+      {pendingDelete && <ConfirmModal
+        label={pendingDelete.kind === 'category' ? 'category' : pendingDelete.kind}
+        message={pendingDelete.kind === 'category'
+          ? `Delete this category? ${pendingDelete.used ? `${pendingDelete.used} existing expense${pendingDelete.used === 1 ? '' : 's'} keep the name, but it will no longer appear in the Add expense list. ` : ''}This action cannot be undone.`
+          : undefined}
+        onCancel={() => setPendingDelete(null)} onConfirm={confirmDelete} />}
       <Toasts toasts={toasts} onDone={dropToast} />
     </>
   );

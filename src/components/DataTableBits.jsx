@@ -7,9 +7,11 @@ export function Toolbar({ search, onSearch, placeholder, statusValue, onStatus, 
       <select className="dt-select" value={statusValue} onChange={(e) => onStatus(e.target.value)}>
         {statusOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select>
-      <button type="button" className={'dt-btn' + (open ? ' on' : '')} aria-expanded={open} onClick={onToggle}>
-        Advanced Filter{activeFilters > 0 && <span className="dt-badge">{activeFilters}</span>}
-      </button>
+      {onToggle && (
+        <button type="button" className={'dt-btn' + (open ? ' on' : '')} aria-expanded={open} onClick={onToggle}>
+          Advanced Filter{activeFilters > 0 && <span className="dt-badge">{activeFilters}</span>}
+        </button>
+      )}
       {extra}
     </div>
   );

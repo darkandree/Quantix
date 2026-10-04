@@ -9,6 +9,7 @@ export default function ExpenseModal({ expense, categories, ensureProducts, onSa
   const [type, setType] = useState(expense?.expense_type || 'Variable Expenses');
   const [category, setCategory] = useState(expense?.expense_category || '');
   const [date, setDate] = useState(expense ? String(expense.date).slice(0, 10) : todayISO());
+  const [dueDate, setDueDate] = useState(expense?.due_date ? String(expense.due_date).slice(0, 10) : '');
   const [barcode, setBarcode] = useState('');
   const [amount, setAmount] = useState(expense ? String(expense.amount) : '');
   const [product, setProduct] = useState(expense?.product_name || '');
@@ -51,14 +52,17 @@ export default function ExpenseModal({ expense, categories, ensureProducts, onSa
     setAmountError(false);
     setSaving(true);
     try {
-      await onSave({
+      const payload = {
         expense_type: type,
         expense_category: category,
         date,
         amount: value,
         product_name: product.trim() || null,
         remarks: note.trim() || null,
-      });
+      };
+      // Only send due_date when it is set or being cleared, so saves still work before the column exists.
+      if (dueDate || expense?.due_date) payload.due_date = dueDate || null;
+      await onSave(payload);
     } catch (err) {
       setError('Could not save to Supabase: ' + err.message);
       setSaving(false);
@@ -90,6 +94,10 @@ export default function ExpenseModal({ expense, categories, ensureProducts, onSa
         <div className="field">
           <label htmlFor="dateInput">Date<span className="required-mark">*</span></label>
           <input type="date" id="dateInput" required value={date} onChange={(e) => setDate(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="dueDateInput">Due date (optional)</label>
+          <input type="date" id="dueDateInput" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </div>
         <div className="field">
           <label htmlFor="expenseBarcodeInput">Scan barcode (optional)</label>

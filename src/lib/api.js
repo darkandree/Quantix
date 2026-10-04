@@ -78,3 +78,25 @@ export async function uploadAvatar(userId, file) {
   if (error) throw new Error(error.message);
   return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl;
 }
+// ---------- Expense categories (expense_details) ----------
+export async function fetchCategoryRows() {
+  return selectAll('expense_details', [['expense_type', true], ['expense_category', true]]);
+}
+
+export async function addCategory(row) {
+  return check(await supabase.from('expense_details').insert(row).select().single());
+}
+
+// Expenses store the category as text, so a rename also updates the expenses that use it.
+export async function updateCategory(old, changes) {
+  const row = check(await supabase.from('expense_details').update(changes).eq('id', old.id).select().single());
+  if (old.expense_category !== row.expense_category || old.expense_type !== row.expense_type) {
+    check(await supabase.from('expenses').update({ expense_category: row.expense_category, expense_type: row.expense_type })
+      .eq('expense_category', old.expense_category).eq('expense_type', old.expense_type));
+  }
+  return row;
+}
+
+export async function deleteCategory(id) {
+  check(await supabase.from('expense_details').delete().eq('id', id));
+}

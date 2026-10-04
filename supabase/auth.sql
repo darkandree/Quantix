@@ -99,3 +99,18 @@ create policy "avatars own update"  on storage.objects for update to authenticat
   using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "avatars own delete"  on storage.objects for delete to authenticated
   using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+-- ---------- Later additions ----------
+-- Due date on expenses (optional).
+alter table public.expenses add column if not exists due_date date;
+
+-- Expense Category page: signed-in Active users can manage categories.
+-- Category names are unique within a type.
+create unique index if not exists expense_details_type_category_key
+  on public.expense_details (expense_type, expense_category);
+
+drop policy if exists "active insert categories" on public.expense_details;
+drop policy if exists "active update categories" on public.expense_details;
+drop policy if exists "active delete categories" on public.expense_details;
+create policy "active insert categories" on public.expense_details for insert to authenticated with check (public.is_active_user());
+create policy "active update categories" on public.expense_details for update to authenticated using (public.is_active_user()) with check (public.is_active_user());
+create policy "active delete categories" on public.expense_details for delete to authenticated using (public.is_active_user());
