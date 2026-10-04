@@ -1,4 +1,6 @@
 -- Seed data generated from ExpensesDataTable.xlsx
+-- Clears the tables first so the script is safe to re-run.
+truncate public.expense_details, public.expenses, public.products restart identity;
 
 insert into public.expense_details (id, expense_type, expense_category) overriding system value values
   (1, 'Variable Expenses', 'Laundry'),
