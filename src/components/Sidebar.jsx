@@ -1,11 +1,11 @@
 import React from 'react';
-import { ChevronLeft, DashboardIcon, ExpensesIcon, ProductsIcon, UsersIcon } from './Icons.jsx';
+import { ChevronLeft, PackageIcon, PieIcon, ReceiptIcon, UsersIcon } from './Icons.jsx';
 
 const GROUPS = [
-  { items: [{ id: 'dashboard', label: 'Dashboard', Icon: DashboardIcon }] },
-  { title: 'Inventory', items: [
-    { id: 'expenses', label: 'Expenses', Icon: ExpensesIcon },
-    { id: 'products', label: 'Products', Icon: ProductsIcon },
+  { items: [{ id: 'dashboard', label: 'Dashboard', Icon: PieIcon }] },
+  { title: 'General', items: [
+    { id: 'expenses', label: 'Expenses', Icon: ReceiptIcon },
+    { id: 'products', label: 'Products', Icon: PackageIcon },
   ] },
   { title: 'Admin', items: [{ id: 'users', label: 'Users', Icon: UsersIcon }] },
 ];

@@ -102,7 +102,7 @@
   }
   .brand-name{
     font-weight:700;
-    font-size:14.5px;
+    font-size:13.5px;
     letter-spacing:-0.01em;
     white-space:nowrap;
     overflow:hidden;
@@ -150,7 +150,7 @@
     background:none;
     color:var(--ink-soft);
     font-family:var(--font-body);
-    font-size:14px;
+    font-size:13px;
     font-weight:500;
     cursor:pointer;
     text-align:left;
@@ -170,7 +170,7 @@
     padding-top:16px;
   }
   .sync-pill{
-    font-size:11px;
+    font-size:10px;
     color:var(--ink-faint);
     line-height:1.4;
     max-width:150px;
@@ -209,19 +209,19 @@
   .page-header h1{
     font-family:var(--font-display);
     font-weight:700;
-    font-size:28px;
+    font-size:26px;
     margin:0 0 4px;
     letter-spacing:-0.01em;
   }
   .page-sub{
-    font-size:13.5px;
+    font-size:12.5px;
     color:var(--ink-soft);
     margin:0;
   }
   .add-btn{
     font-family:var(--font-body);
     font-weight:500;
-    font-size:14px;
+    font-size:13px;
     background:var(--accent);
     color:var(--accent-contrast);
     border:none;
@@ -245,7 +245,7 @@
   }
   .month-filter{
     font-family:var(--font-body);
-    font-size:14px;
+    font-size:13px;
     font-weight:500;
     color:var(--ink);
     background:var(--card);
@@ -281,7 +281,7 @@
     box-shadow:0 1px 3px rgba(16,24,40,0.06), 0 1px 2px rgba(16,24,40,0.04);
   }
   .summary .label{
-    font-size:11px;
+    font-size:10px;
     text-transform:uppercase;
     letter-spacing:0.07em;
     color:var(--ink-faint);
@@ -289,13 +289,13 @@
   }
   .summary .value{
     font-family:var(--font-mono);
-    font-size:22px;
+    font-size:20px;
     font-weight:500;
   }
   .summary .cell.fixed .value{color:var(--fixed);}
   .summary .cell.variable .value{color:var(--variable);}
   .trend-indicator{
-    font-size:11.5px;
+    font-size:10.5px;
     font-weight:500;
     margin-top:6px;
     min-height:14px;
@@ -313,7 +313,7 @@
   }
   .card h3{
     margin:0 0 16px;
-    font-size:14px;
+    font-size:13px;
     font-weight:700;
   }
   .dash-grid{
@@ -349,7 +349,7 @@
     align-items:center;
     justify-content:center;
     font-family:var(--font-mono);
-    font-size:12px;
+    font-size:11px;
     font-weight:500;
     color:var(--ink-soft);
     text-align:center;
@@ -364,7 +364,7 @@
     display:flex;
     align-items:center;
     gap:8px;
-    font-size:13px;
+    font-size:12px;
     color:var(--ink-soft);
   }
   .legend-dot{
@@ -387,7 +387,7 @@
   .bar-row .bar-top{
     display:flex;
     justify-content:space-between;
-    font-size:13px;
+    font-size:12px;
     margin-bottom:6px;
   }
   .bar-row .bar-top .amt{
@@ -412,15 +412,15 @@
     align-items:center;
     padding:11px 0;
     border-bottom:1px solid var(--line);
-    font-size:13.5px;
+    font-size:12.5px;
   }
   .recent-item:last-child{border-bottom:none;}
   .recent-item .rec-cat{font-weight:500;}
-  .recent-item .rec-date{color:var(--ink-faint);font-size:12px;font-family:var(--font-mono);}
+  .recent-item .rec-date{color:var(--ink-faint);font-size:11px;font-family:var(--font-mono);}
   .recent-item .rec-amt{font-family:var(--font-mono);font-weight:500;}
   .empty-note{
     color:var(--ink-faint);
-    font-size:13px;
+    font-size:12px;
     font-style:italic;
     text-align:center;
     padding:20px 0;
@@ -467,7 +467,7 @@
     align-items:center;
     gap:8px;
     padding:7px 6px;
-    font-size:13.5px;
+    font-size:12.5px;
     color:var(--ink);
     cursor:pointer;
     border-radius:6px;
@@ -485,7 +485,7 @@
   }
   thead th{
     text-align:left;
-    font-size:11px;
+    font-size:10px;
     text-transform:uppercase;
     letter-spacing:0.06em;
     color:var(--ink-faint);
@@ -498,7 +498,7 @@
   tbody td{
     padding:14px 18px;
     border-bottom:1px solid var(--line);
-    font-size:14px;
+    font-size:13px;
     vertical-align:top;
   }
   tbody tr:last-child td{border-bottom:none;}
@@ -506,14 +506,14 @@
   td.date{
     font-family:var(--font-mono);
     color:var(--ink-soft);
-    font-size:13px;
+    font-size:12px;
     white-space:nowrap;
   }
   td.category .cat-name{font-weight:500;}
   td.category .note{
     display:block;
     color:var(--ink-faint);
-    font-size:12.5px;
+    font-size:11.5px;
     margin-top:2px;
   }
   td.amount{
@@ -524,7 +524,7 @@
   }
   .tag{
     display:inline-block;
-    font-size:11px;
+    font-size:10px;
     font-weight:500;
     padding:3px 9px;
     border-radius:20px;
@@ -537,7 +537,7 @@
     border:none;
     color:var(--ink-faint);
     cursor:pointer;
-    font-size:12px;
+    font-size:11px;
     padding:4px;
     border-radius:6px;
   }
@@ -547,7 +547,7 @@
   .empty-row td{
     text-align:center;
     color:var(--ink-faint);
-    font-size:13.5px;
+    font-size:12.5px;
     padding:40px 18px;
     font-style:italic;
   }
@@ -560,7 +560,7 @@
   tfoot td.amount{
     font-family:var(--font-mono);
     text-align:right;
-    font-size:16px;
+    font-size:14.5px;
   }
 
   .overlay{
@@ -585,13 +585,13 @@
   .modal h2{
     font-family:var(--font-display);
     font-weight:700;
-    font-size:22px;
+    font-size:20px;
     margin:0 0 20px;
   }
   .field{margin-bottom:16px;}
   .field label{
     display:block;
-    font-size:12px;
+    font-size:11px;
     font-weight:500;
     text-transform:uppercase;
     letter-spacing:0.05em;
@@ -605,7 +605,7 @@
   .field input, .field select{
     width:100%;
     font-family:var(--font-body);
-    font-size:14px;
+    font-size:13px;
     padding:10px 12px;
     border:1px solid var(--line-strong);
     border-radius:8px;
@@ -627,7 +627,7 @@
     border:1px solid var(--line-strong);
     background:var(--card);
     font-family:var(--font-body);
-    font-size:13.5px;
+    font-size:12.5px;
     font-weight:500;
     cursor:pointer;
     color:var(--ink-soft);
@@ -651,7 +651,7 @@
     padding:10px 18px;
     border-radius:8px;
     font-family:var(--font-body);
-    font-size:14px;
+    font-size:13px;
     cursor:pointer;
     color:var(--ink-soft);
     display:inline-flex;
@@ -666,7 +666,7 @@
     padding:10px 18px;
     border-radius:8px;
     font-family:var(--font-body);
-    font-size:14px;
+    font-size:13px;
     font-weight:500;
     cursor:pointer;
     display:inline-flex;
@@ -681,13 +681,13 @@
     padding:10px 18px;
     border-radius:8px;
     font-family:var(--font-body);
-    font-size:14px;
+    font-size:13px;
     font-weight:500;
     cursor:pointer;
   }
   .btn-danger:hover{opacity:0.88;}
   .confirm-text{
-    font-size:14px;
+    font-size:13px;
     color:var(--ink-soft);
     line-height:1.5;
     margin:0 0 22px;
@@ -716,17 +716,17 @@
     animation:splashSpin .8s linear infinite;
   }
   .modal-loading-text{
-    font-size:13.5px;
+    font-size:12.5px;
     color:var(--ink-soft);
   }
   .error{
-    font-size:12.5px;
+    font-size:11.5px;
     color:var(--danger);
     margin-top:6px;
     display:none;
   }
   .hint-text{
-    font-size:12px;
+    font-size:11px;
     color:var(--ink-faint);
     margin-top:6px;
   }
@@ -796,7 +796,7 @@
   }
   .scan-hint{
     padding:8px 12px;
-    font-size:12px;
+    font-size:11px;
     color:var(--ink-soft);
     background:var(--card);
     text-align:center;
@@ -908,7 +908,7 @@
   .splash-name{
     font-family:var(--font-display);
     font-weight:700;
-    font-size:19px;
+    font-size:17.5px;
     color:var(--ink);
     margin-bottom:18px;
   }
@@ -925,7 +925,7 @@
     to{transform:rotate(360deg);}
   }
   .splash-status{
-    font-size:13px;
+    font-size:12px;
     color:var(--ink-soft);
   }
   .report-header{
@@ -936,7 +936,7 @@
   }
   .report-header h3{margin:0;}
   .report-hint{
-    font-size:12px;
+    font-size:11px;
     color:var(--ink-faint);
   }
   .report-scroll{
@@ -949,13 +949,13 @@
     padding:32px 16px;
     text-align:center;
     color:var(--ink-faint);
-    font-size:13.5px;
+    font-size:12.5px;
     font-style:italic;
   }
   table.report-table{
     border-collapse:collapse;
     min-width:100%;
-    font-size:12.5px;
+    font-size:11.5px;
   }
   table.report-table th, table.report-table td{
     padding:7px 9px;
@@ -977,20 +977,20 @@
     background:var(--paper);
     color:var(--ink-soft);
     font-weight:600;
-    font-size:11.5px;
+    font-size:10.5px;
   }
   table.report-table thead th .weekday{
     display:block;
     font-weight:400;
     color:var(--ink-faint);
-    font-size:10px;
+    font-size:9px;
   }
   table.report-table thead th:first-child{background:var(--paper);}
   tr.report-section td{
     background:var(--fixed-bg);
     color:var(--fixed);
     font-weight:600;
-    font-size:11.5px;
+    font-size:10.5px;
     text-align:left;
     letter-spacing:0.03em;
     text-transform:uppercase;
@@ -1007,7 +1007,7 @@
     background:var(--accent);
     color:var(--accent-contrast);
     font-weight:700;
-    font-size:13px;
+    font-size:12px;
   }
   tr.report-grand-total td:first-child{background:var(--accent);color:var(--accent-contrast);}
   td.report-zero{color:var(--ink-faint);}
@@ -1046,8 +1046,8 @@
     padding-bottom:10px;
     border-bottom:1px solid var(--line);
   }
-  .rp-cat{font-weight:700;font-size:13.5px;color:var(--ink);}
-  .rp-date{font-size:11.5px;color:var(--ink-faint);margin-top:2px;}
+  .rp-cat{font-weight:700;font-size:12.5px;color:var(--ink);}
+  .rp-date{font-size:10.5px;color:var(--ink-faint);margin-top:2px;}
   .report-popover-body{
     display:flex;
     flex-direction:column;
@@ -1059,19 +1059,19 @@
     display:flex;
     justify-content:space-between;
     gap:12px;
-    font-size:12.5px;
+    font-size:11.5px;
     color:var(--ink-soft);
   }
   .rp-label{flex:1;}
   .rp-amt{font-family:var(--font-mono);color:var(--ink);font-weight:500;white-space:nowrap;}
-  .report-popover-empty{font-size:12.5px;color:var(--ink-faint);font-style:italic;}
+  .report-popover-empty{font-size:11.5px;color:var(--ink-faint);font-style:italic;}
   .report-popover-footer{
     display:flex;
     justify-content:space-between;
     margin-top:10px;
     padding-top:10px;
     border-top:1px solid var(--line);
-    font-size:12.5px;
+    font-size:11.5px;
     font-weight:700;
     color:var(--ink);
   }
@@ -1112,7 +1112,7 @@
     display:flex;
     align-items:center;
     gap:10px;
-    font-size:13.5px;
+    font-size:12.5px;
     color:var(--ink);
     min-width:220px;
     max-width:340px;
