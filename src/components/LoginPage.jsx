@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase.js';
+import LoginBackground from './LoginBackground.jsx';
 
 export default function LoginPage({ theme }) {
   const [email, setEmail] = useState('');
@@ -12,16 +13,18 @@ export default function LoginPage({ theme }) {
     setError('');
     setBusy(true);
     const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (err) { setError(err.message); setBusy(false); }
+    if (err) { setError(err.message); setBusy(false); return; }
+    try { sessionStorage.setItem('justSignedIn', '1'); } catch { /* storage unavailable */ }
   }
 
   return (
     <div className="login-wrap" data-theme={theme}>
+      <LoginBackground />
       <form className="login-card" onSubmit={submit}>
         <div className="login-brand">
           <img src="/logo.png" alt="Logo" />
           <div>
-            <div className="login-title">Expense Ledger</div>
+            <div className="login-title">Quantix Codex</div>
             <div className="login-sub">Expense Monitoring</div>
           </div>
         </div>

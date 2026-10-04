@@ -15,14 +15,15 @@ export default function Modal({ onClose, className = '', children }) {
   );
 }
 
-export function ConfirmModal({ label, onCancel, onConfirm }) {
+// Defaults to the delete confirmation; pass title/message/confirmLabel/tone to reuse it.
+export function ConfirmModal({ label, title, message, confirmLabel = 'Delete', tone = 'danger', onCancel, onConfirm }) {
   return (
     <Modal onClose={onCancel} className="confirm-modal">
-      <h2>Delete record?</h2>
-      <p className="confirm-text">Are you sure you want to delete this {label}? This action cannot be undone.</p>
+      <h2>{title || 'Delete record?'}</h2>
+      <p className="confirm-text">{message || `Are you sure you want to delete this ${label}? This action cannot be undone.`}</p>
       <div className="modal-actions">
         <button type="button" className="btn-ghost" onClick={onCancel}>Cancel</button>
-        <button type="button" className="btn-danger" onClick={onConfirm}>Delete</button>
+        <button type="button" className={tone === 'primary' ? 'btn-primary' : 'btn-danger'} onClick={onConfirm}>{confirmLabel}</button>
       </div>
     </Modal>
   );

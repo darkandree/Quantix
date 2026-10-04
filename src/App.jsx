@@ -23,18 +23,8 @@ const FALLBACK_CATEGORIES = {
 
 let toastSeq = 0;
 
-function Splash({ text, hide }) {
-  return (
-    <div className={'splash' + (hide ? ' hide' : '')}>
-      <div className="splash-inner">
-        <img src="/logo.png" alt="Logo" className="splash-logo" />
-        <div className="splash-name">Expense Ledger</div>
-        <div className="splash-spinner" />
-        <div className="splash-status">{text}</div>
-      </div>
-    </div>
-  );
-}
+// Plain backdrop shown for the instant while the session/profile is being checked.
+const Blank = () => <div className="login-wrap" />;
 
 // Everything the signed-in, Active user sees.
 function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
@@ -50,7 +40,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
   const [usersLoaded, setUsersLoaded] = useState(false);
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
   const [sync, setSync] = useState('Connecting…');
-  const [splash, setSplash] = useState({ visible: true, hide: false, text: 'Syncing with Supabase…' });
+  const [signOutConfirm, setSignOutConfirm] = useState(false);
   const [dashMonth, setDashMonth] = useState(currentMonthKey());
   const [tableMonth, setTableMonth] = useState('all');
 
@@ -79,12 +69,20 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
       if (ok) setExpenses(exps.value);
       else console.error(exps.reason);
       setSync(ok ? 'Live · synced with Supabase' : 'Could not reach Supabase');
-      setSplash((s) => ({ ...s, text: ok ? 'Synced!' : "Couldn't sync — showing what's available" }));
-      setTimeout(() => setSplash((s) => ({ ...s, hide: true })), 250);
-      setTimeout(() => setSplash((s) => ({ ...s, visible: false })), 650);
+      if (!ok) toast("Couldn't load your data from Supabase.", 'error', 5000);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [toast]);
+
+  // Right after signing in, confirm it with a toast (not on a plain page refresh).
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('justSignedIn')) {
+        sessionStorage.removeItem('justSignedIn');
+        toast('Signed in successfully.', 'success');
+      }
+    } catch { /* storage unavailable */ }
+  }, [toast]);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -224,8 +222,6 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
 
   return (
     <>
-      {splash.visible && <Splash text={splash.text} hide={splash.hide} />}
-
       <button className="mobile-menu-btn" aria-label="Open navigation" type="button" onClick={() => setMobileOpen((o) => !o)}>
         {mobileOpen ? <CloseIcon /> : <MenuIcon />}
       </button>
@@ -250,7 +246,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
             onToggleTheme={onToggleTheme}
             profile={profile}
             onEditProfile={() => setProfileModal(true)}
-            onSignOut={() => supabase.auth.signOut()}
+            onSignOut={() => setSignOutConfirm(true)}
           />
           <main className="content">
             {page === 'dashboard' && <Dashboard expenses={expenses} month={dashMonth} onMonthChange={setDashMonth} fixedCategories={categories['Fixed Expenses'] || []} />}
@@ -284,6 +280,16 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
       )}
       {productModal && <ProductModal onSave={saveProduct} onClose={() => setProductModal(false)} />}
       {profileModal && <ProfileModal profile={profile} onSaved={profileSaved} onClose={() => setProfileModal(false)} />}
+      {signOutConfirm && (
+        <ConfirmModal
+          title="Sign out?"
+          message="Are you sure you want to sign out of Quantix Codex?"
+          confirmLabel="Sign out"
+          tone="primary"
+          onCancel={() => setSignOutConfirm(false)}
+          onConfirm={() => supabase.auth.signOut()}
+        />
+      )}
       {pendingDelete && <ConfirmModal label={pendingDelete.kind} onCancel={() => setPendingDelete(null)} onConfirm={confirmDelete} />}
       <Toasts toasts={toasts} onDone={dropToast} />
     </>
@@ -303,7 +309,7 @@ function Gate({ session, theme, onToggleTheme }) {
     return () => { cancelled = true; };
   }, [session.user.id]);
 
-  if (profile === undefined) return <Splash text="Signing you in…" />;
+  if (profile === undefined) return <Blank />;
 
   if (!profile || profile.status !== 'Active') {
     return (
@@ -347,7 +353,7 @@ export default function App() {
       </div>
     );
   }
-  if (session === undefined) return <Splash text="Loading…" />;
+  if (session === undefined) return <Blank />;
   if (!session) return <LoginPage theme={theme} />;
   return <Gate session={session} theme={theme} onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} />;
 }

@@ -1,20 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle, TrashToast } from './Icons.jsx';
+import { AlertCircle, CheckCircle, TrashToast, XIcon } from './Icons.jsx';
 
-const icons = { success: <CheckCircle />, error: <AlertCircle />, delete: <TrashToast /> };
+const META = {
+  success: { title: 'Success', icon: <CheckCircle /> },
+  error: { title: 'Error', icon: <AlertCircle /> },
+  delete: { title: 'Deleted', icon: <TrashToast /> },
+};
 
 function Toast({ toast, onDone }) {
   const [show, setShow] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const meta = META[toast.type] || META.success;
+
+  const dismiss = () => {
+    setShow(false);
+    setClosing(true);
+    setTimeout(() => onDone(toast.id), 250);
+  };
+
   useEffect(() => {
     const raf = requestAnimationFrame(() => setShow(true));
-    const hide = setTimeout(() => setShow(false), toast.duration);
-    const remove = setTimeout(() => onDone(toast.id), toast.duration + 300);
-    return () => { cancelAnimationFrame(raf); clearTimeout(hide); clearTimeout(remove); };
-  }, [toast, onDone]);
+    const hide = setTimeout(dismiss, toast.duration);
+    return () => { cancelAnimationFrame(raf); clearTimeout(hide); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <div className={`toast ${toast.type}${show ? ' show' : ''}`}>
-      {icons[toast.type]}
-      <span className="toast-message">{toast.message}</span>
+    <div className={`toast ${toast.type}${show ? ' show' : ''}${closing ? ' closing' : ''}`} role="status">
+      <span className="toast-badge">{meta.icon}</span>
+      <div className="toast-body">
+        <div className="toast-title">{toast.title || meta.title}</div>
+        <div className="toast-message">{toast.message}</div>
+      </div>
+      <button type="button" className="toast-close" aria-label="Dismiss" onClick={dismiss}><XIcon /></button>
     </div>
   );
 }

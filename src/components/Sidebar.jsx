@@ -20,7 +20,7 @@ export default function Sidebar({ page, onNavigate, collapsed, onToggleCollapse,
         <div className="brand-left">
           <div className="brand-mark"><img src="/logo.png" alt="Logo" /></div>
           <div className="brand-text">
-            <div className="brand-name">Expense Ledger</div>
+            <div className="brand-name">Quantix Codex</div>
             <div className="brand-sub">Expense Monitoring</div>
           </div>
         </div>
