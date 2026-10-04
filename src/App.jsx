@@ -1,0 +1,193 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import Sidebar from './components/Sidebar.jsx';
+import Dashboard from './components/Dashboard.jsx';
+import ExpensesPage from './components/ExpensesPage.jsx';
+import ProductsPage from './components/ProductsPage.jsx';
+import ExpenseModal from './components/ExpenseModal.jsx';
+import ProductModal from './components/ProductModal.jsx';
+import { ConfirmModal } from './components/Modal.jsx';
+import Toasts from './components/Toasts.jsx';
+import { CloseIcon, MenuIcon } from './components/Icons.jsx';
+import * as api from './lib/api.js';
+import { isConfigured } from './lib/supabase.js';
+import { currentMonthKey } from './lib/format.js';
+
+const FALLBACK_CATEGORIES = {
+  'Variable Expenses': ['Laundry', 'Fuel', 'Groceries', 'Food Order', 'Online', 'Credit Card - BDO JCB Lucky Cat', 'Credit Card - Shop More', 'Credit Card - Eastwest', 'Unit Transfer Expenses', 'Miscellaneous'],
+  'Fixed Expenses': ['Monthly Rental', 'Water', 'Electricity', 'Internet'],
+};
+
+let toastSeq = 0;
+
+export default function App() {
+  const [page, setPage] = useState('dashboard');
+  const [theme, setTheme] = useState(() => (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const [expenses, setExpenses] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
+  const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
+  const [sync, setSync] = useState(isConfigured ? 'Connecting…' : 'Supabase not configured');
+  const [splash, setSplash] = useState({ visible: true, hide: false, text: 'Syncing with Supabase…' });
+  const [dashMonth, setDashMonth] = useState(currentMonthKey());
+  const [tableMonth, setTableMonth] = useState(currentMonthKey());
+
+  const [expenseModal, setExpenseModal] = useState(false);
+  const [productModal, setProductModal] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null); // { kind, id }
+  const [toasts, setToasts] = useState([]);
+
+  const productsPromise = useRef(null);
+
+  const toast = useCallback((message, type = 'success', duration = 3000) => {
+    setToasts((t) => [...t, { id: ++toastSeq, message, type, duration }]);
+  }, []);
+  const dropToast = useCallback((id) => setToasts((t) => t.filter((x) => x.id !== id)), []);
+
+  useEffect(() => { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
+
+  // Initial load
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let ok = isConfigured;
+      if (isConfigured) {
+        setSync('Syncing…');
+        const [cats, exps] = await Promise.allSettled([api.fetchCategories(), api.fetchExpenses()]);
+        if (cancelled) return;
+        if (cats.status === 'fulfilled' && Object.values(cats.value).some((l) => l.length)) setCategories(cats.value);
+        if (exps.status === 'fulfilled') setExpenses(exps.value);
+        else { ok = false; console.error(exps.reason); }
+        setSync(ok ? 'Live · synced with Supabase' : 'Could not reach Supabase');
+      }
+      setSplash((s) => ({ ...s, text: ok ? 'Synced!' : "Couldn't sync — showing what's available" }));
+      setTimeout(() => setSplash((s) => ({ ...s, hide: true })), 250);
+      setTimeout(() => setSplash((s) => ({ ...s, visible: false })), 650);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const loadProducts = useCallback(async () => {
+    try {
+      const rows = await api.fetchProducts();
+      setProducts(rows);
+      setProductsLoaded(true);
+      return rows;
+    } catch (err) {
+      console.error(err);
+      toast('Could not load products: ' + err.message, 'error');
+      return [];
+    }
+  }, [toast]);
+
+  // Resolves with the products list, fetching it once on first use.
+  const ensureProducts = useCallback(() => {
+    if (productsLoaded) return Promise.resolve(products);
+    productsPromise.current = productsPromise.current || loadProducts().finally(() => { productsPromise.current = null; });
+    return productsPromise.current;
+  }, [productsLoaded, products, loadProducts]);
+
+  function navigate(next) {
+    setPage(next);
+    setMobileOpen(false);
+    if (next === 'products' && !productsLoaded) ensureProducts();
+  }
+
+  async function saveExpense(payload) {
+    const row = await api.addExpense(payload);
+    setExpenses((list) => [row, ...list]);
+    setExpenseModal(false);
+    toast('Expense added successfully', 'success');
+  }
+
+  async function saveProduct(payload) {
+    const row = await api.addProduct(payload);
+    setProducts((list) => [row, ...list]);
+    setProductsLoaded(true);
+    setProductModal(false);
+    toast('Product added successfully', 'success');
+  }
+
+  async function confirmDelete() {
+    const { kind, id } = pendingDelete;
+    setPendingDelete(null);
+    const isExpense = kind === 'expense';
+    const [list, setList, remove] = isExpense ? [expenses, setExpenses, api.deleteExpense] : [products, setProducts, api.deleteProduct];
+    setList(list.filter((r) => r.id !== id)); // optimistic
+    try {
+      await remove(id);
+      toast(`${isExpense ? 'Expense' : 'Product'} deleted`, 'delete');
+    } catch (err) {
+      setList(list);
+      toast('Could not delete from Supabase: ' + err.message, 'error');
+    }
+  }
+
+  return (
+    <>
+      {splash.visible && (
+        <div className={'splash' + (splash.hide ? ' hide' : '')}>
+          <div className="splash-inner">
+            <img src="/logo.png" alt="Logo" className="splash-logo" />
+            <div className="splash-name">Expense Ledger</div>
+            <div className="splash-spinner" />
+            <div className="splash-status">{splash.text}</div>
+          </div>
+        </div>
+      )}
+
+      <button className="mobile-menu-btn" aria-label="Open navigation" type="button" onClick={() => setMobileOpen((o) => !o)}>
+        {mobileOpen ? <CloseIcon /> : <MenuIcon />}
+      </button>
+      <div className={'sidebar-backdrop' + (mobileOpen ? ' show' : '')} onClick={() => setMobileOpen(false)} />
+
+      <div className="app">
+        <Sidebar
+          page={page}
+          onNavigate={navigate}
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((c) => !c)}
+          mobileOpen={mobileOpen}
+          syncText={sync}
+          theme={theme}
+          onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+        />
+        <main className="content">
+          {!isConfigured && (
+            <div className="card" style={{ marginBottom: 16 }}>
+              <h3>Supabase isn't configured</h3>
+              <p className="page-sub">Copy <code>.env.example</code> to <code>.env</code>, fill in your project URL and anon key, then restart the dev server.</p>
+            </div>
+          )}
+          {page === 'dashboard' && <Dashboard expenses={expenses} month={dashMonth} onMonthChange={setDashMonth} />}
+          {page === 'expenses' && (
+            <ExpensesPage
+              expenses={expenses}
+              month={tableMonth}
+              onMonthChange={setTableMonth}
+              onAdd={() => setExpenseModal(true)}
+              onDelete={(id) => setPendingDelete({ kind: 'expense', id })}
+            />
+          )}
+          {page === 'products' && (
+            <ProductsPage
+              products={products}
+              loaded={productsLoaded}
+              onAdd={() => setProductModal(true)}
+              onDelete={(id) => setPendingDelete({ kind: 'product', id })}
+            />
+          )}
+        </main>
+      </div>
+
+      {expenseModal && (
+        <ExpenseModal categories={categories} ensureProducts={ensureProducts} onSave={saveExpense} onClose={() => setExpenseModal(false)} />
+      )}
+      {productModal && <ProductModal onSave={saveProduct} onClose={() => setProductModal(false)} />}
+      {pendingDelete && <ConfirmModal label={pendingDelete.kind} onCancel={() => setPendingDelete(null)} onConfirm={confirmDelete} />}
+      <Toasts toasts={toasts} onDone={dropToast} />
+    </>
+  );
+}
