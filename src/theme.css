@@ -341,3 +341,12 @@ td.actions .del-btn{margin:0 6px;padding:5px;}
 .status-right{display:flex;align-items:center;gap:12px;flex-shrink:0;}
 .due-text{font-size:12px;color:var(--ink-soft);white-space:nowrap;}
 @media (max-width:520px){.status-right{flex-direction:column;align-items:flex-end;gap:4px;}}
+
+/* ---------- To-Do ---------- */
+.todo-check{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;}
+.todo-done .cat-name{text-decoration:line-through;color:var(--ink-faint);}
+.todo-done .note{text-decoration:line-through;}
+td.todo-check-cell{width:44px;text-align:center;}
+.tag.neutral{background:var(--line);color:var(--ink-soft);}
+.field textarea{width:100%;font-family:var(--font-body);font-size:14px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);resize:vertical;min-height:84px;}
+.field textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}

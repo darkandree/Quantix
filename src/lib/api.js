@@ -100,3 +100,20 @@ export async function updateCategory(old, changes) {
 export async function deleteCategory(id) {
   check(await supabase.from('expense_details').delete().eq('id', id));
 }
+
+// ---------- To-Do ----------
+export async function fetchTodos() {
+  return selectAll('todos', [['task_date', true], ['id', true]]);
+}
+
+export async function addTodo(todo) {
+  return check(await supabase.from('todos').insert(todo).select().single());
+}
+
+export async function updateTodo(id, changes) {
+  return check(await supabase.from('todos').update(changes).eq('id', id).select().single());
+}
+
+export async function deleteTodo(id) {
+  check(await supabase.from('todos').delete().eq('id', id));
+}

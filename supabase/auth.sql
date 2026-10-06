@@ -114,3 +114,25 @@ drop policy if exists "active delete categories" on public.expense_details;
 create policy "active insert categories" on public.expense_details for insert to authenticated with check (public.is_active_user());
 create policy "active update categories" on public.expense_details for update to authenticated using (public.is_active_user()) with check (public.is_active_user());
 create policy "active delete categories" on public.expense_details for delete to authenticated using (public.is_active_user());
+
+-- ---------- To-Do list (each user only sees and edits their own tasks) ----------
+create table if not exists public.todos (
+  id         bigint generated always as identity primary key,
+  title      text not null,
+  details    text,
+  task_date  date,
+  done       boolean not null default false,
+  created_by uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+create index if not exists todos_owner_date_idx on public.todos (created_by, task_date);
+
+alter table public.todos enable row level security;
+drop policy if exists "own todos select" on public.todos;
+drop policy if exists "own todos insert" on public.todos;
+drop policy if exists "own todos update" on public.todos;
+drop policy if exists "own todos delete" on public.todos;
+create policy "own todos select" on public.todos for select to authenticated using (created_by = auth.uid() and public.is_active_user());
+create policy "own todos insert" on public.todos for insert to authenticated with check (created_by = auth.uid() and public.is_active_user());
+create policy "own todos update" on public.todos for update to authenticated using (created_by = auth.uid() and public.is_active_user()) with check (created_by = auth.uid());
+create policy "own todos delete" on public.todos for delete to authenticated using (created_by = auth.uid() and public.is_active_user());

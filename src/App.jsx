@@ -7,6 +7,8 @@ import ProductsPage from './components/ProductsPage.jsx';
 import UsersPage from './components/UsersPage.jsx';
 import CategoriesPage from './components/CategoriesPage.jsx';
 import CategoryModal from './components/CategoryModal.jsx';
+import TodosPage from './components/TodosPage.jsx';
+import TodoModal from './components/TodoModal.jsx';
 import ExpenseModal from './components/ExpenseModal.jsx';
 import ProductModal from './components/ProductModal.jsx';
 import ProfileModal from './components/ProfileModal.jsx';
@@ -43,6 +45,9 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
   const [categoryRows, setCategoryRows] = useState([]);
   const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   const [categoryModal, setCategoryModal] = useState(null); // null = closed, {} = new, row = editing
+  const [todos, setTodos] = useState([]);
+  const [todosLoaded, setTodosLoaded] = useState(false);
+  const [todoModal, setTodoModal] = useState(null); // null = closed, {} = new, row = editing
   const categories = useMemo(() => {
     if (!categoriesLoaded) return FALLBACK_CATEGORIES;
     const grouped = { 'Variable Expenses': [], 'Fixed Expenses': [] };
@@ -133,6 +138,40 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
     setMobileOpen(false);
     if (next === 'products' && !productsLoaded) ensureProducts();
     if (next === 'users' && !usersLoaded) loadUsers();
+    if (next === 'todos' && !todosLoaded) loadTodos();
+  }
+
+  async function loadTodos() {
+    try {
+      setTodos(await api.fetchTodos());
+      setTodosLoaded(true);
+    } catch (err) {
+      toast('Could not load tasks: ' + err.message, 'error');
+    }
+  }
+
+  async function saveTodo(payload) {
+    if (todoModal?.id) {
+      const row = await api.updateTodo(todoModal.id, payload);
+      setTodos((list) => list.map((t) => (t.id === row.id ? row : t)));
+      toast('Task updated', 'success');
+    } else {
+      const row = await api.addTodo(payload);
+      setTodos((list) => [...list, row]);
+      toast('Task added successfully', 'success');
+    }
+    setTodoModal(null);
+  }
+
+  async function toggleTodo(todo) {
+    const before = todos;
+    setTodos((list) => list.map((t) => (t.id === todo.id ? { ...t, done: !t.done } : t))); // optimistic
+    try {
+      await api.updateTodo(todo.id, { done: !todo.done });
+    } catch (err) {
+      setTodos(before);
+      toast('Could not update task: ' + err.message, 'error');
+    }
   }
 
   // Make sure everything searchable has been loaded once the search box is used.
@@ -157,7 +196,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
     const LIMIT = 5;
     const groups = [];
 
-    const pages = [['dashboard', 'Dashboard'], ['expenses', 'Expenses'], ['products', 'Products'], ['categories', 'Expense Category'], ['users', 'Users']]
+    const pages = [['dashboard', 'Dashboard'], ['expenses', 'Expenses'], ['products', 'Products'], ['categories', 'Expense Category'], ['todos', 'To-Do'], ['users', 'Users']]
       .filter(([, label]) => matches(label))
       .map(([id, label]) => ({ key: 'page-' + id, title: label, sub: 'Go to page', pick: go(id, '') }));
     if (pages.length) groups.push({ title: 'Pages', items: pages });
@@ -244,6 +283,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
       expense: [expenses, setExpenses, api.deleteExpense, 'Expense'],
       product: [products, setProducts, api.deleteProduct, 'Product'],
       category: [categoryRows, setCategoryRows, api.deleteCategory, 'Category'],
+      todo: [todos, setTodos, api.deleteTodo, 'Task'],
     }[kind];
     const [list, setList, remove, name] = target;
     setList(list.filter((r) => r.id !== id)); // optimistic
@@ -317,6 +357,17 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
                 onDelete={(row) => setPendingDelete({ kind: 'category', id: row.id, used: categoryUsage[`${row.expense_type}|${row.expense_category}`] || 0 })}
               />
             )}
+            {page === 'todos' && (
+              <TodosPage
+                todos={todos}
+                loaded={todosLoaded}
+                search={search}
+                onAdd={() => setTodoModal({})}
+                onEdit={(t) => setTodoModal(t)}
+                onToggle={toggleTodo}
+                onDelete={(t) => setPendingDelete({ kind: 'todo', id: t.id })}
+              />
+            )}
             {page === 'users' && <UsersPage users={users} loaded={usersLoaded} me={profile.id} search={search} />}
           </main>
         </div>
@@ -337,6 +388,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
           onConfirm={() => supabase.auth.signOut()}
         />
       )}
+      {todoModal && <TodoModal todo={todoModal.id ? todoModal : null} onSave={saveTodo} onClose={() => setTodoModal(null)} />}
       {categoryModal && <CategoryModal category={categoryModal.id ? categoryModal : null} onSave={saveCategory} onClose={() => setCategoryModal(null)} />}
       {pendingDelete && <ConfirmModal
         label={pendingDelete.kind === 'category' ? 'category' : pendingDelete.kind}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, PackageIcon, PieIcon, ReceiptIcon, TagIcon, UsersIcon } from './Icons.jsx';
+import { CheckSquareIcon, ChevronLeft, PackageIcon, PieIcon, ReceiptIcon, TagIcon, UsersIcon } from './Icons.jsx';
 
 const GROUPS = [
   { items: [{ id: 'dashboard', label: 'Dashboard', Icon: PieIcon }] },
@@ -7,6 +7,7 @@ const GROUPS = [
     { id: 'expenses', label: 'Expenses', Icon: ReceiptIcon },
     { id: 'products', label: 'Products', Icon: PackageIcon },
     { id: 'categories', label: 'Expense Category', Icon: TagIcon },
+    { id: 'todos', label: 'To-Do', Icon: CheckSquareIcon },
   ] },
   { title: 'Admin', items: [{ id: 'users', label: 'Users', Icon: UsersIcon }] },
 ];
