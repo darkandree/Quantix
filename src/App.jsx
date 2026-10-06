@@ -285,7 +285,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
             onSignOut={() => setSignOutConfirm(true)}
           />
           <main className="content">
-            {page === 'dashboard' && <Dashboard expenses={expenses} month={dashMonth} onMonthChange={setDashMonth} fixedCategories={categories['Fixed Expenses'] || []} />}
+            {page === 'dashboard' && <Dashboard expenses={expenses} month={dashMonth} onMonthChange={setDashMonth} categoryRows={categoryRows} />}
             {page === 'expenses' && (
               <ExpensesPage
                 expenses={expenses}

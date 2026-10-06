@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import MonthSelect from './MonthSelect.jsx';
 import MonthlyReport from './MonthlyReport.jsx';
 import { BarChartIcon, CalendarIcon, ClockIcon, LockIcon, PieIcon, ShieldCheckIcon, TrendIcon, WalletIcon } from './Icons.jsx';
@@ -22,48 +22,79 @@ function Trend({ current, previous, enabled }) {
   );
 }
 
-// Which fixed categories have an expense logged in the selected month.
-function FixedStatus({ expenses, month, fixedCategories }) {
+const TABS = [
+  { id: 'fixed', label: 'Fixed expenses', match: (c) => c.expense_type === 'Fixed Expenses', empty: 'No fixed categories found.' },
+  { id: 'cards', label: 'Credit cards', match: (c) => /^credit card/i.test(c.expense_category), empty: 'No credit card categories found.' },
+];
+
+// The category's due day repeats every month; clamp it to the length of the selected month.
+function dueInMonth(dueDate, month) {
+  if (!dueDate || month === 'all') return null;
+  const [y, m] = month.split('-').map(Number);
+  const day = Math.min(Number(String(dueDate).slice(8, 10)), new Date(y, m, 0).getDate());
+  return `${month}-${String(day).padStart(2, '0')}`;
+}
+
+// Payment status per category for the selected month: paid = an expense is logged under it that month.
+function StatusPanel({ expenses, month, categoryRows }) {
+  const [tab, setTab] = useState('fixed');
+  const active = TABS.find((t) => t.id === tab);
+
   const rows = useMemo(() => {
     if (month === 'all') return [];
     const paid = {};
+    expensesForMonth(expenses, month).forEach((e) => {
+      const p = paid[e.expense_category] || (paid[e.expense_category] = { amount: 0, date: '' });
+      p.amount += Number(e.amount || 0);
+      if (String(e.date) > p.date) p.date = String(e.date);
+    });
+    const byName = new Map();
+    categoryRows.filter(active.match).forEach((c) => byName.set(c.expense_category, c));
+    // Categories seen in this month's expenses but missing from the category list still count.
     expensesForMonth(expenses, month)
-      .filter((e) => e.expense_type === 'Fixed Expenses')
-      .forEach((e) => {
-        const p = paid[e.expense_category] || (paid[e.expense_category] = { amount: 0, date: '' });
-        p.amount += Number(e.amount || 0);
-        if (String(e.date) > p.date) p.date = String(e.date);
-      });
-    const names = new Set([...fixedCategories, ...Object.keys(paid)]);
-    return [...names].sort((a, b) => a.localeCompare(b)).map((name) => ({ name, paid: paid[name] }));
-  }, [expenses, month, fixedCategories]);
+      .filter((e) => active.match(e))
+      .forEach((e) => { if (!byName.has(e.expense_category)) byName.set(e.expense_category, e); });
+    return [...byName.values()]
+      .map((c) => ({ name: c.expense_category, due: dueInMonth(c.due_date, month), paid: paid[c.expense_category] }))
+      .sort((a, b) => (a.due || '9').localeCompare(b.due || '9') || a.name.localeCompare(b.name));
+  }, [expenses, month, categoryRows, active]);
 
   const paidCount = rows.filter((r) => r.paid).length;
 
   return (
     <div className="card">
       <div className="report-header">
-        <h3 className="with-icon"><ShieldCheckIcon />Fixed expenses status</h3>
+        <h3 className="with-icon"><ShieldCheckIcon />Payment status</h3>
         {month !== 'all' && <span className="report-hint">{paidCount} of {rows.length} paid · {monthLabel(month)}</span>}
       </div>
+      <div className="status-tabs" role="tablist">
+        {TABS.map((t) => (
+          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={'status-tab' + (tab === t.id ? ' on' : '')} onClick={() => setTab(t.id)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
       {month === 'all'
-        ? <div className="empty-note">Select a specific month to see which fixed expenses are paid.</div>
+        ? <div className="empty-note">Select a specific month to see what is paid.</div>
         : rows.length === 0
-          ? <div className="empty-note">No fixed categories found.</div>
+          ? <div className="empty-note">{active.empty}</div>
           : rows.map((r) => (
             <div className="recent-item" key={r.name}>
               <div>
                 <div className="rec-cat">{r.name}</div>
                 <div className="rec-date">{r.paid ? `${fmt(r.paid.amount)} · paid ${displayDate(r.paid.date)}` : 'No payment logged this month'}</div>
               </div>
-              <span className={'tag ' + (r.paid ? 'fixed' : 'variable')}>{r.paid ? 'Paid' : 'Unpaid'}</span>
+              <div className="status-right">
+                <span className="due-text">{r.due ? `Due ${displayDate(r.due)}` : 'No due date'}</span>
+                <span className={'tag ' + (r.paid ? 'fixed' : 'variable')}>{r.paid ? 'Paid' : 'Unpaid'}</span>
+              </div>
             </div>
           ))}
     </div>
   );
 }
 
-export default function Dashboard({ expenses, month, onMonthChange, fixedCategories }) {
+export default function Dashboard({ expenses, month, onMonthChange, categoryRows }) {
   const list = useMemo(() => expensesForMonth(expenses, month), [expenses, month]);
   const cur = useMemo(() => totalsFor(list), [list]);
   const hasPrev = month !== 'all';
@@ -133,7 +164,7 @@ export default function Dashboard({ expenses, month, onMonthChange, fixedCategor
             </div>
           </div>
         </div>
-        <FixedStatus expenses={expenses} month={month} fixedCategories={fixedCategories} />
+        <StatusPanel expenses={expenses} month={month} categoryRows={categoryRows} />
       </div>
 
       <div className="dash-grid even">
