@@ -354,9 +354,7 @@ td.todo-check-cell{width:44px;text-align:center;}
 /* ---------- Phone radial menu (bottom-right) ---------- */
 .radial,.radial-scrim{display:none;}
 @media (max-width:820px){
-  /* the radial menu replaces the hamburger + slide-in drawer on phones */
-  .mobile-menu-btn,.sidebar,.sidebar-backdrop{display:none !important;}
-  .topbar{padding-left:12px;}
+  /* the radial menu sits alongside the hamburger + slide-in drawer, which stay as before */
   .content{padding-bottom:110px;}
 
   .radial-scrim{display:block;position:fixed;inset:0;z-index:78;background:rgba(10,20,25,0.35);opacity:0;pointer-events:none;transition:opacity .25s ease;}
