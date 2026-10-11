@@ -350,3 +350,53 @@ td.todo-check-cell{width:44px;text-align:center;}
 .tag.neutral{background:var(--line);color:var(--ink-soft);}
 .field textarea{width:100%;font-family:var(--font-body);font-size:14px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);resize:vertical;min-height:84px;}
 .field textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+/* ---------- Phone radial menu (bottom-right) ---------- */
+.radial,.radial-scrim{display:none;}
+@media (max-width:820px){
+  /* the radial menu replaces the hamburger + slide-in drawer on phones */
+  .mobile-menu-btn,.sidebar,.sidebar-backdrop{display:none !important;}
+  .topbar{padding-left:12px;}
+  .content{padding-bottom:110px;}
+
+  .radial-scrim{display:block;position:fixed;inset:0;z-index:78;background:rgba(10,20,25,0.35);opacity:0;pointer-events:none;transition:opacity .25s ease;}
+  .radial-scrim.show{opacity:1;pointer-events:auto;}
+  .radial{display:block;position:fixed;right:18px;bottom:18px;width:58px;height:58px;z-index:80;}
+  .radial-ring{position:absolute;inset:0;pointer-events:none;}
+  .radial.open .radial-ring{pointer-events:auto;touch-action:none;}
+  .radial.open .radial-ring *{touch-action:none;}
+
+  /* big disc growing from the button, like a circular reveal */
+  .radial-disc{
+    position:absolute;left:50%;top:50%;width:440px;height:440px;border-radius:50%;
+    background:var(--accent);transform:translate(-50%,-50%) scale(0);transition:transform .38s cubic-bezier(.2,.8,.2,1);
+    box-shadow:0 10px 40px rgba(0,0,0,0.25);
+  }
+  .radial.open .radial-disc{transform:translate(-50%,-50%) scale(1);}
+
+  .radial-item{
+    position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;border:none;padding:0;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    background:rgba(0,0,0,0.2);color:#fff;
+    transition:transform .38s cubic-bezier(.2,.8,.2,1),opacity .25s ease,background .15s ease;
+  }
+  .radial-ring.dragging .radial-item{transition:none;}
+  .radial-item svg{width:20px;height:20px;}
+  .radial-item.active{background:#fff;color:var(--accent);}
+  .radial-label{
+    position:absolute;top:calc(100% + 3px);left:50%;transform:translateX(-50%);
+    font-size:10px;font-weight:600;line-height:1.1;color:#fff;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,0.3);pointer-events:none;
+  }
+
+  .radial-main{
+    position:absolute;inset:0;z-index:3;border-radius:50%;border:2px solid transparent;
+    background:var(--accent);color:var(--accent-contrast);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 18px rgba(0,0,0,0.28);
+    transition:background .25s ease,border-color .25s ease,box-shadow .25s ease;
+  }
+  .radial-main svg{width:26px;height:26px;transition:transform .3s ease;}
+  .radial.open .radial-main{background:rgba(0,0,0,0.22);color:#fff;border-color:rgba(255,255,255,0.45);box-shadow:none;}
+  .radial.open .radial-main svg{transform:rotate(45deg);}
+}
+@media (max-width:820px){.radial-label{white-space:normal;width:68px;text-align:center;}}

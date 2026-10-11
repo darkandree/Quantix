@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Sidebar from './components/Sidebar.jsx';
+import Sidebar, { NAV_ITEMS } from './components/Sidebar.jsx';
+import RadialNav from './components/RadialNav.jsx';
 import Topbar from './components/Topbar.jsx';
 import Dashboard from './components/Dashboard.jsx';
 import ExpensesPage from './components/ExpensesPage.jsx';
@@ -298,6 +299,7 @@ function Shell({ profile, onProfileChange, theme, onToggleTheme }) {
 
   return (
     <>
+      <RadialNav items={NAV_ITEMS} page={page} onNavigate={navigate} />
       <button className="mobile-menu-btn" aria-label="Open navigation" type="button" onClick={() => setMobileOpen((o) => !o)}>
         {mobileOpen ? <CloseIcon /> : <MenuIcon />}
       </button>

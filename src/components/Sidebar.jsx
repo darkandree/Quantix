@@ -12,6 +12,9 @@ const GROUPS = [
   { title: 'Admin', items: [{ id: 'users', label: 'Users', Icon: UsersIcon }] },
 ];
 
+// Flat list of every page, shared with the phone radial menu.
+export const NAV_ITEMS = GROUPS.flatMap((g) => g.items);
+
 export default function Sidebar({ page, onNavigate, collapsed, onToggleCollapse, mobileOpen, syncText }) {
   return (
     <aside className={'sidebar' + (collapsed ? ' collapsed' : '') + (mobileOpen ? ' mobile-open' : '')}>
